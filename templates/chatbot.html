@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <title>Chatbot</title>
+  <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
+  <style>
+    .references-box {
+      margin-top: 15px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #007bff;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .references-box h4 {
+      margin-bottom: 8px;
+      color: #007bff;
+    }
+
+    .reference-item {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .reference-item small {
+      color: #666;
+      display: block;
+      margin-top: 3px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">Chatbot</div>
+    <div class="nav">
+      <div class="profile-info">
+        {{ request.user.username }}
+        <div class="profile-details">
+          <p><strong>Username:</strong> {{ request.user.username }}</p>
+          <p><strong>Email:</strong> {{ request.user.email }}</p>
+        </div>
+      </div>
+      <a href="{% url 'logout' %}">Logout</a>
+    </div>
+  </header>
+
+  <div class="chat-container">
+    <h2>Ask Your Question</h2>
+
+    <form method="POST" class="chat-form">
+      {% csrf_token %}
+      <input type="text" name="question" placeholder="Type your question..." required>
+      <button type="submit">Send</button>
+    </form>
+
+    {% if response %}
+    <div class="chat-output">
+      {% if chat_history %}
+      {% with last_chat=chat_history|last %}
+      <div class="user-question">
+        <strong>You:</strong> {{ last_chat.question }}
+      </div>
+      {% endwith %}
+      {% endif %}
+
+      <div class="bot-answer">
+        <strong>Bot:</strong> {{ response|linebreaksbr }}
+      </div>
+
+
+      <!-- 📄 References from File -->
+      {% if reference_items %}
+      <div class="references-box">
+        <h4> References from File</h4>
+        {% for ref in reference_items %}
+        <div class="reference-item">
+          <strong>{{ forloop.counter }}.</strong>
+          {{ ref.text }}
+          <small>
+            Page: {{ ref.page_no }}, Lines: {{ ref.line }}, Similarity: {{ ref.similarity }}
+          </small>
+
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+
+    {% if debug %}
+    <div class="debug-info">
+      <h4>Bot Debug:</h4>
+      <pre>{{ debug }}</pre>
+    </div>
+    {% endif %}
+
+
+
+    <h3>Your Chat History</h3>
+    <div class="chat-history">
+      {% if chat_history %}
+      {% for chat in chat_history %}
+      <div class="history-item">
+        <p><strong>You:</strong> {{ chat.question }}</p>
+        <p><strong>Bot:</strong> {{ chat.answer }}</p>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>No chat history yet.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Chatbot App</p>
+  </footer>
+
+  <script>
+    window.addEventListener("pageshow", function (event) {
+      if (event.persisted) {
+        window.location.reload(true);
+      }
+
+      fetch("/check-session/")
+        .then(response => response.json())
+        .then(data => {
+          if (!data.logged_in) {
+            window.location.href = "/login/";
+          }
+        })
+        .catch(err => console.error("Session check failed:", err));
+    });
+  </script>
+
+</body>
+
+</html>

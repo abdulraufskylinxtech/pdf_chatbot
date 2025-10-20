@@ -1,0 +1,78 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="{% static 'css/signup.css' %}">
+  <!-- Add Font Awesome for the eye icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+
+<body>
+  <div class="form-container">
+    <h2>Create Your Account</h2>
+
+    <form method="POST" id="signupForm" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="error" style="color:red; margin-bottom:10px;">
+        {% for error in form.non_field_errors %}
+        {{ error }}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <label for="username">Username</label>
+      <input type="text" name="username" id="username" placeholder="Enter your username"
+        value="{{ form.username.value|default_if_none:'' }}" required>
+      {% if form.username.errors %}
+      <span class="error">{{ form.username.errors.0 }}</span>
+      {% endif %}
+
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" placeholder="Enter your email"
+        value="{{ form.email.value|default_if_none:'' }}" required>
+      {% if form.email.errors %}
+      <span class="error">{{ form.email.errors.0 }}</span>
+      {% endif %}
+
+      <label for="password1">Password</label>
+     <div class="password-wrapper">
+  <input type="password" name="password1" id="password" placeholder="Enter a strong password" autocomplete="new-password" required>
+  <i class="fa-solid fa-eye-slash toggle-password" data-target="password"></i>
+</div>
+      {% if form.password1.errors %}
+      <span class="error">{{ form.password1.errors.0 }}</span>
+      {% endif %}
+
+      <label for="password2">Confirm Password</label>
+      <div class="password-wrapper">
+  <input type="password" name="password2" id="confirm" placeholder="Re-enter your password" autocomplete="new-password" required>
+  <i class="fa-solid fa-eye-slash toggle-password" data-target="confirm"></i>
+</div>
+      {% if form.password2.errors %}
+      <span class="error">{{ form.password2.errors.0 }}</span>
+      {% endif %}
+
+
+      <button type="submit" id="submitBtn">Sign Up</button>
+
+      {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </form>
+
+    <p>Already have an account? <a href="{% url 'login' %}">Log In</a></p>
+  </div>
+
+  <script src="{% static 'js/signup.js' %}"></script>
+</body>
+
+</html>

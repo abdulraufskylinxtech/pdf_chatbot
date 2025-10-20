@@ -1,0 +1,120 @@
+/* Basic reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Page background */
+body {
+    font-family: "Poppins", sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Form container */
+.form-container {
+    background: #fff;
+    padding: 40px 50px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.form-container:hover {
+    transform: translateY(-3px);
+}
+
+/* Heading */
+.form-container h2 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 28px;
+    font-weight: 600;
+}
+
+/* Input fields */
+.form-container input[type="text"],
+.form-container input[type="password"],
+.form-container input[type="email"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    transition: border 0.3s ease;
+}
+
+.form-container input:focus {
+    border-color: #2575fc;
+}
+
+/* Labels */
+.form-container label {
+    display: block;
+    text-align: left;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: 500;
+}
+
+/* Submit button */
+.form-container button {
+    width: 100%;
+    padding: 12px;
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.form-container button:hover {
+    background-color: #1b5de3;
+}
+
+/* Paragraph and link */
+.form-container p {
+    margin-top: 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+.form-container a {
+    color: #2575fc;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.form-container a:hover {
+    text-decoration: underline;
+}
+
+.server-errors p {
+  color: green;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .form-container {
+        padding: 30px 25px;
+    }
+
+    .form-container h2 {
+        font-size: 24px;
+    }
+}

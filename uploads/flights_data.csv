@@ -1,0 +1,601 @@
+airline,flight_number,departure,destination,date,price,seats_available
+Turkish Airlines,TU973,Dubai,Paris,2026-08-30,408.92,300
+British Airways,BR971,Singapore,Abu Dhabi,2026-04-22,537.85,125
+British Airways,BR120,Beijing,Bangkok,2026-04-08,660.24,196
+Qatar Airways,QA356,Mumbai,Sydney,2026-04-13,258.89,72
+Emirates,EM406,Tokyo,London,2025-10-18,283.41,158
+AirBlue,AI360,Doha,London,2025-11-26,706.7,144
+SereneAir,SE583,Dubai,Istanbul,2026-02-09,110.9,125
+Lufthansa,LU808,Abu Dhabi,Delhi,2025-10-10,748.84,209
+Singapore Airlines,SI533,Lahore,Paris,2025-12-19,169.25,17
+Etihad,ET442,Sydney,Delhi,2025-11-11,819.07,283
+Turkish Airlines,TU890,Doha,Paris,2026-06-28,654.74,61
+PIA,PI669,Doha,Dubai,2026-05-25,395.44,253
+Emirates,EM409,Lahore,Cape Town,2026-06-01,741.94,41
+PIA,PI520,Beijing,Lahore,2025-12-31,396.6,199
+SereneAir,SE372,Abu Dhabi,Bangkok,2025-12-05,480.85,42
+Singapore Airlines,SI827,Tokyo,Delhi,2026-05-14,755.9,228
+Emirates,EM430,Paris,New York,2026-03-20,310.69,14
+PIA,PI569,Paris,Istanbul,2025-10-31,126.14,94
+SereneAir,SE593,Delhi,Singapore,2026-09-23,367.95,287
+AirBlue,AI437,Sydney,Cape Town,2026-03-21,183.24,267
+Emirates,EM798,London,Frankfurt,2026-06-29,227.3,202
+Qatar Airways,QA889,Abu Dhabi,Karachi,2026-08-12,295.17,145
+PIA,PI372,Islamabad,Cape Town,2026-05-10,653.81,275
+AirBlue,AI564,Doha,London,2026-03-30,377.62,48
+SereneAir,SE457,Karachi,Islamabad,2026-09-13,262.36,257
+PIA,PI595,Beijing,Bangkok,2025-11-17,842.19,86
+PIA,PI428,Delhi,Tokyo,2026-03-11,766.73,185
+Etihad,ET734,Frankfurt,Istanbul,2025-12-27,469.64,264
+Lufthansa,LU377,Islamabad,Doha,2026-01-13,131.57,85
+Etihad,ET433,Doha,Tokyo,2026-03-22,349.36,30
+Etihad,ET631,Abu Dhabi,Delhi,2026-09-23,394.29,116
+Lufthansa,LU418,London,Karachi,2026-03-25,597.88,54
+Lufthansa,LU520,Beijing,Abu Dhabi,2025-11-13,656.08,192
+Etihad,ET504,Karachi,Singapore,2026-04-11,592.41,51
+Qatar Airways,QA642,London,Karachi,2026-07-13,760.82,115
+Emirates,EM114,London,Tokyo,2026-06-29,123.52,64
+Lufthansa,LU709,Istanbul,Sydney,2026-05-21,570.73,150
+Etihad,ET836,Paris,Singapore,2026-02-13,712.41,36
+AirBlue,AI855,Beijing,Toronto,2025-11-08,633.21,241
+PIA,PI828,Sydney,New York,2025-10-01,420.02,50
+SereneAir,SE941,Tokyo,Abu Dhabi,2026-09-04,923.36,82
+Etihad,ET619,Delhi,Tokyo,2026-05-26,923.79,143
+Emirates,EM308,Sydney,Delhi,2026-06-11,823.12,24
+Lufthansa,LU559,Islamabad,Bangkok,2025-12-28,802.92,101
+British Airways,BR885,New York,Doha,2025-11-03,561.33,72
+Turkish Airlines,TU917,Toronto,Abu Dhabi,2026-08-22,571.66,41
+Qatar Airways,QA500,Sydney,Islamabad,2026-02-15,300.42,128
+Lufthansa,LU720,Frankfurt,Lahore,2025-11-11,666.16,214
+Etihad,ET179,Dubai,Mumbai,2025-12-30,620.77,157
+Lufthansa,LU878,Toronto,Paris,2025-12-20,137.77,271
+AirBlue,AI569,Abu Dhabi,Singapore,2026-09-03,783.95,195
+Turkish Airlines,TU801,Sydney,Cape Town,2026-03-02,954.61,277
+PIA,PI930,Mumbai,New York,2025-12-12,766.07,115
+Turkish Airlines,TU171,Istanbul,Delhi,2026-04-13,350.39,136
+Emirates,EM795,Islamabad,Bangkok,2026-06-22,153.55,84
+Lufthansa,LU622,Beijing,Islamabad,2026-01-31,412.47,105
+Qatar Airways,QA234,Paris,Lahore,2025-11-04,393.34,294
+Turkish Airlines,TU460,Cape Town,Tokyo,2026-08-03,654.64,256
+AirBlue,AI836,Karachi,Islamabad,2025-10-09,587.25,221
+AirBlue,AI921,London,Singapore,2026-07-09,643.76,155
+Qatar Airways,QA257,Tokyo,London,2026-03-21,263.32,281
+Singapore Airlines,SI301,Tokyo,Singapore,2025-10-14,534.67,119
+Turkish Airlines,TU946,Paris,Dubai,2026-04-28,207.44,21
+SereneAir,SE562,London,Frankfurt,2026-08-26,860.87,95
+Qatar Airways,QA507,Doha,Sydney,2026-04-22,805.51,44
+Singapore Airlines,SI887,Delhi,Beijing,2025-12-23,577.02,223
+British Airways,BR785,Frankfurt,Islamabad,2025-12-12,675.81,13
+Qatar Airways,QA957,Bangkok,Karachi,2026-05-01,530.24,36
+Emirates,EM586,Frankfurt,Lahore,2025-10-24,450.81,76
+PIA,PI854,Islamabad,Bangkok,2025-10-25,366.89,27
+PIA,PI122,Abu Dhabi,New York,2026-05-29,206.07,294
+Singapore Airlines,SI242,London,Cape Town,2026-07-14,857.96,77
+Turkish Airlines,TU868,Istanbul,Sydney,2026-02-22,778.84,33
+SereneAir,SE267,Doha,Istanbul,2026-01-27,496.99,85
+Emirates,EM699,New York,Beijing,2026-05-25,527.05,173
+SereneAir,SE215,Beijing,Karachi,2026-09-07,438.69,204
+PIA,PI331,Dubai,Frankfurt,2026-03-22,491.52,97
+AirBlue,AI342,Istanbul,Tokyo,2026-02-20,311.88,95
+Lufthansa,LU175,New York,Toronto,2026-05-02,611.11,112
+AirBlue,AI158,Delhi,Mumbai,2026-06-16,820.37,121
+Turkish Airlines,TU451,Abu Dhabi,Delhi,2025-10-15,522.09,194
+British Airways,BR164,Sydney,Lahore,2025-11-26,258.42,189
+SereneAir,SE401,Toronto,Tokyo,2025-10-16,436.88,266
+Turkish Airlines,TU235,Paris,Sydney,2025-10-24,806.22,72
+Emirates,EM287,Karachi,Mumbai,2026-05-17,453.7,36
+Lufthansa,LU363,Cape Town,Singapore,2026-05-10,610.39,97
+Lufthansa,LU291,Tokyo,Doha,2026-04-05,564.66,216
+British Airways,BR240,Istanbul,Sydney,2026-07-20,361.72,68
+Lufthansa,LU292,Doha,Singapore,2026-04-19,898.13,116
+PIA,PI240,New York,Bangkok,2025-11-21,172.44,280
+Singapore Airlines,SI393,Istanbul,Sydney,2025-11-13,973.86,175
+Singapore Airlines,SI343,Istanbul,Lahore,2026-06-12,644.28,297
+Turkish Airlines,TU393,Lahore,Istanbul,2025-11-25,954.78,10
+Etihad,ET785,Tokyo,Islamabad,2026-03-06,849.43,250
+Singapore Airlines,SI671,Toronto,Doha,2026-02-09,240.35,132
+AirBlue,AI590,Paris,Lahore,2026-06-07,794.37,162
+SereneAir,SE194,Lahore,Toronto,2026-04-09,433.95,24
+Turkish Airlines,TU899,Delhi,Cape Town,2026-02-07,429.94,92
+SereneAir,SE794,London,Doha,2026-06-08,826.65,234
+Qatar Airways,QA954,Frankfurt,Sydney,2026-04-01,392.31,147
+AirBlue,AI348,Sydney,Istanbul,2026-03-23,528.18,85
+Singapore Airlines,SI551,Tokyo,Beijing,2026-09-28,339.13,265
+Qatar Airways,QA226,Toronto,Doha,2026-09-17,897.99,64
+Emirates,EM422,Singapore,Bangkok,2026-06-05,953.66,183
+Qatar Airways,QA557,Abu Dhabi,Islamabad,2026-02-27,820.54,229
+AirBlue,AI463,Tokyo,Lahore,2026-06-10,729.14,282
+Lufthansa,LU206,Paris,Istanbul,2026-05-17,913.27,220
+PIA,PI842,Lahore,Cape Town,2025-12-07,381.54,241
+Lufthansa,LU451,Abu Dhabi,Frankfurt,2026-09-27,839.77,161
+British Airways,BR154,Cape Town,Sydney,2025-11-14,581.22,167
+Emirates,EM522,Frankfurt,Toronto,2025-12-26,650.68,130
+PIA,PI875,London,Singapore,2025-10-22,733.17,259
+British Airways,BR437,Sydney,Lahore,2026-08-04,945.5,243
+SereneAir,SE155,Bangkok,Istanbul,2025-10-21,328.59,165
+AirBlue,AI934,Frankfurt,London,2026-06-04,898.15,118
+PIA,PI176,Islamabad,Bangkok,2026-08-30,321.74,17
+Etihad,ET841,Karachi,Beijing,2025-11-03,154.1,88
+Emirates,EM732,Tokyo,Paris,2026-07-25,493.05,253
+PIA,PI673,Lahore,Istanbul,2025-12-26,200.24,289
+Singapore Airlines,SI411,London,Sydney,2025-11-09,883.01,204
+British Airways,BR186,Abu Dhabi,New York,2026-03-18,502.48,167
+SereneAir,SE378,Lahore,London,2026-03-17,359.65,129
+PIA,PI768,Paris,Singapore,2026-08-19,163.99,93
+Qatar Airways,QA251,Bangkok,Beijing,2025-10-28,369.84,216
+British Airways,BR662,Istanbul,Lahore,2025-12-07,328.91,248
+Lufthansa,LU552,Abu Dhabi,Frankfurt,2025-11-29,242.4,191
+AirBlue,AI365,Paris,Lahore,2026-01-22,556.94,35
+Singapore Airlines,SI386,Doha,Frankfurt,2026-02-07,890.42,131
+Lufthansa,LU192,London,Sydney,2026-01-21,355.33,224
+AirBlue,AI752,Istanbul,Mumbai,2026-06-14,395.65,108
+Lufthansa,LU581,London,Sydney,2026-01-24,809.72,181
+Turkish Airlines,TU581,Karachi,Islamabad,2026-04-19,955.74,298
+AirBlue,AI383,Bangkok,Karachi,2026-04-15,423.57,92
+AirBlue,AI364,Tokyo,Bangkok,2026-01-30,937.91,298
+Qatar Airways,QA749,Dubai,Toronto,2026-04-17,870.62,292
+British Airways,BR132,Abu Dhabi,Toronto,2026-09-15,223.5,88
+Lufthansa,LU527,Lahore,Singapore,2026-02-08,589.78,113
+Turkish Airlines,TU817,Beijing,Cape Town,2026-06-13,976.34,122
+British Airways,BR272,Sydney,Beijing,2026-06-19,730.15,165
+Etihad,ET587,Dubai,Frankfurt,2026-04-30,902.28,140
+SereneAir,SE739,Bangkok,Frankfurt,2026-03-15,161.51,268
+Lufthansa,LU682,New York,Istanbul,2026-02-22,914.73,10
+Turkish Airlines,TU149,Islamabad,Tokyo,2026-05-03,330.7,157
+Singapore Airlines,SI332,Sydney,Abu Dhabi,2026-04-18,364.62,212
+Emirates,EM873,Bangkok,Beijing,2026-03-11,943.76,85
+SereneAir,SE617,Beijing,Karachi,2026-01-19,190.94,57
+AirBlue,AI369,Delhi,London,2025-12-20,124.58,93
+Etihad,ET492,Beijing,Paris,2026-03-29,681.35,75
+Lufthansa,LU743,Beijing,Karachi,2026-05-30,896.56,53
+British Airways,BR192,Islamabad,Tokyo,2025-11-25,968.98,61
+SereneAir,SE557,Bangkok,Frankfurt,2025-12-19,829.12,141
+Turkish Airlines,TU111,Islamabad,Abu Dhabi,2026-03-02,703.92,290
+SereneAir,SE899,Cape Town,Toronto,2026-01-10,214.77,238
+Etihad,ET653,Istanbul,Tokyo,2026-06-23,544.69,258
+Turkish Airlines,TU337,New York,Karachi,2026-01-31,370.07,250
+PIA,PI118,Islamabad,Mumbai,2025-10-31,338.21,23
+Lufthansa,LU346,Mumbai,Toronto,2026-05-29,500.99,50
+Lufthansa,LU750,New York,Delhi,2026-08-18,950.85,114
+Turkish Airlines,TU750,Cape Town,Toronto,2026-06-16,259.21,162
+Etihad,ET255,New York,Cape Town,2026-09-24,713.81,246
+Etihad,ET910,Cape Town,Istanbul,2026-01-30,111.74,299
+PIA,PI450,London,Istanbul,2025-10-07,383.56,188
+Emirates,EM692,Toronto,Abu Dhabi,2025-11-16,679.69,118
+Emirates,EM752,London,Singapore,2026-02-01,918.27,181
+Etihad,ET606,New York,Islamabad,2026-09-19,247.0,258
+PIA,PI387,Lahore,London,2026-08-23,120.54,73
+SereneAir,SE523,Doha,Beijing,2026-06-24,236.07,88
+Singapore Airlines,SI200,Cape Town,Tokyo,2026-06-05,499.12,199
+Etihad,ET298,Lahore,Cape Town,2025-11-16,859.08,73
+British Airways,BR353,Delhi,Sydney,2026-06-12,549.21,185
+Qatar Airways,QA891,Beijing,Delhi,2026-03-06,591.19,287
+PIA,PI960,Beijing,Mumbai,2025-10-12,332.18,53
+Singapore Airlines,SI351,Cape Town,Singapore,2026-05-27,457.85,299
+British Airways,BR568,Cape Town,Tokyo,2026-05-22,889.57,93
+British Airways,BR722,Cape Town,Mumbai,2026-07-09,741.98,177
+Etihad,ET751,Lahore,Abu Dhabi,2025-11-15,470.54,54
+Lufthansa,LU144,Lahore,Islamabad,2025-10-05,463.43,51
+Turkish Airlines,TU402,Abu Dhabi,Singapore,2026-04-03,156.11,83
+SereneAir,SE138,Mumbai,Doha,2026-06-20,172.28,134
+Turkish Airlines,TU845,London,Cape Town,2026-09-25,972.61,230
+Turkish Airlines,TU638,Islamabad,London,2026-09-23,942.13,265
+Lufthansa,LU203,Karachi,Islamabad,2026-09-18,820.9,294
+Emirates,EM581,Cape Town,Frankfurt,2026-09-29,573.38,210
+SereneAir,SE858,London,Karachi,2026-08-30,843.28,24
+Turkish Airlines,TU222,London,Beijing,2026-02-26,493.04,197
+PIA,PI199,Sydney,Istanbul,2025-11-23,819.82,160
+PIA,PI545,Lahore,Sydney,2026-07-22,338.54,139
+Qatar Airways,QA621,Singapore,Beijing,2026-06-08,104.84,147
+AirBlue,AI858,Karachi,Dubai,2026-05-12,718.69,102
+British Airways,BR606,Dubai,Singapore,2026-08-16,112.85,216
+British Airways,BR295,Tokyo,Frankfurt,2025-11-09,632.88,266
+Etihad,ET611,Mumbai,Abu Dhabi,2026-09-28,918.71,76
+Lufthansa,LU417,Karachi,Bangkok,2026-02-17,936.32,213
+Singapore Airlines,SI188,London,Istanbul,2025-10-01,710.29,229
+Qatar Airways,QA950,Karachi,Singapore,2026-08-13,210.39,73
+Qatar Airways,QA739,Abu Dhabi,Doha,2025-10-11,672.48,82
+Etihad,ET850,Islamabad,Istanbul,2026-08-21,738.31,240
+Lufthansa,LU824,New York,Karachi,2026-06-17,692.06,196
+SereneAir,SE651,Toronto,Islamabad,2026-07-06,414.48,36
+Etihad,ET770,Tokyo,Lahore,2026-09-03,782.56,203
+PIA,PI256,Istanbul,Paris,2026-03-11,154.45,27
+SereneAir,SE712,Tokyo,Delhi,2026-03-29,694.58,124
+Emirates,EM186,Paris,Islamabad,2026-02-24,590.07,184
+PIA,PI493,Frankfurt,Paris,2026-05-25,276.29,89
+Qatar Airways,QA448,Dubai,New York,2026-02-15,925.39,183
+Singapore Airlines,SI395,Karachi,Islamabad,2025-11-12,637.49,154
+Etihad,ET660,Islamabad,Lahore,2026-03-12,481.51,155
+Singapore Airlines,SI824,Dubai,Beijing,2025-11-21,654.76,61
+SereneAir,SE850,New York,Sydney,2026-02-03,774.34,106
+SereneAir,SE896,Istanbul,Beijing,2026-05-15,982.93,197
+SereneAir,SE226,Bangkok,Sydney,2025-11-21,524.85,245
+Etihad,ET536,Singapore,Delhi,2026-04-01,198.13,237
+Etihad,ET116,New York,Dubai,2026-06-19,534.18,154
+Etihad,ET403,Sydney,Lahore,2026-05-12,321.74,55
+Turkish Airlines,TU804,Delhi,Tokyo,2026-05-18,587.66,17
+Etihad,ET304,Dubai,Singapore,2026-02-07,345.53,32
+Lufthansa,LU457,Singapore,Istanbul,2026-08-29,481.18,127
+PIA,PI480,Toronto,New York,2026-05-31,883.83,12
+Singapore Airlines,SI954,Karachi,Abu Dhabi,2025-11-10,318.58,89
+Etihad,ET249,Istanbul,Lahore,2026-09-10,730.08,295
+SereneAir,SE798,Islamabad,Sydney,2025-12-11,681.04,127
+Qatar Airways,QA410,New York,Doha,2026-05-26,283.08,31
+PIA,PI714,Beijing,Singapore,2026-07-04,459.19,152
+Lufthansa,LU861,Singapore,London,2025-10-11,987.67,17
+Qatar Airways,QA380,Beijing,Doha,2026-03-16,487.65,14
+Qatar Airways,QA707,London,Istanbul,2026-01-29,476.14,275
+Singapore Airlines,SI590,Abu Dhabi,Istanbul,2025-12-01,743.78,19
+Lufthansa,LU547,Tokyo,New York,2026-07-21,816.64,104
+Lufthansa,LU601,Islamabad,Sydney,2026-07-09,296.74,22
+PIA,PI711,London,Cape Town,2026-08-11,366.75,145
+British Airways,BR481,Mumbai,Karachi,2026-06-24,317.22,288
+Etihad,ET232,Bangkok,Toronto,2026-07-17,527.22,65
+Etihad,ET741,Istanbul,Tokyo,2026-04-22,262.99,247
+AirBlue,AI739,Doha,Toronto,2026-02-18,717.33,196
+AirBlue,AI908,Cape Town,Frankfurt,2026-09-13,956.16,240
+Turkish Airlines,TU172,Doha,Delhi,2026-06-23,521.43,288
+Turkish Airlines,TU527,Toronto,Abu Dhabi,2025-11-21,375.76,277
+Singapore Airlines,SI747,Delhi,Frankfurt,2026-06-17,374.08,161
+Emirates,EM523,Frankfurt,Singapore,2026-04-10,646.27,246
+Lufthansa,LU557,Abu Dhabi,Tokyo,2025-12-19,729.68,17
+AirBlue,AI686,Doha,Beijing,2025-11-23,778.91,110
+SereneAir,SE587,Frankfurt,Lahore,2026-03-26,893.95,111
+Qatar Airways,QA946,Lahore,Islamabad,2026-08-19,655.02,64
+Singapore Airlines,SI758,London,Islamabad,2026-07-23,482.56,127
+Emirates,EM450,Mumbai,Cape Town,2026-05-15,154.51,105
+British Airways,BR543,Karachi,Doha,2026-08-06,598.28,271
+Lufthansa,LU224,London,Toronto,2026-03-13,655.68,70
+Lufthansa,LU771,Karachi,Bangkok,2026-03-06,254.55,291
+SereneAir,SE259,Abu Dhabi,Islamabad,2026-09-15,216.14,191
+Emirates,EM628,Mumbai,Beijing,2025-12-30,155.07,183
+Lufthansa,LU139,Mumbai,New York,2026-02-15,978.0,240
+Singapore Airlines,SI425,Delhi,Sydney,2025-12-10,385.26,293
+PIA,PI683,Abu Dhabi,Doha,2026-08-06,728.67,125
+Lufthansa,LU473,Mumbai,Frankfurt,2026-01-22,712.05,281
+Singapore Airlines,SI656,Sydney,Singapore,2025-12-12,792.45,119
+British Airways,BR149,Sydney,Doha,2025-10-10,245.65,164
+SereneAir,SE475,Cape Town,Dubai,2025-10-03,738.59,14
+British Airways,BR531,Cape Town,Mumbai,2026-04-29,899.63,51
+PIA,PI481,Doha,Toronto,2025-11-06,416.76,187
+AirBlue,AI304,Karachi,Beijing,2026-04-27,417.76,26
+SereneAir,SE967,Frankfurt,Singapore,2026-07-30,865.32,171
+Singapore Airlines,SI667,Mumbai,Tokyo,2026-07-01,705.69,240
+PIA,PI309,Sydney,London,2026-03-13,100.34,226
+SereneAir,SE707,Frankfurt,Islamabad,2025-11-21,994.85,287
+Singapore Airlines,SI134,Mumbai,Cape Town,2026-09-24,898.82,184
+PIA,PI142,Singapore,Beijing,2026-09-29,796.57,33
+Lufthansa,LU267,Sydney,Bangkok,2026-03-25,953.57,79
+Lufthansa,LU892,Delhi,Mumbai,2026-08-20,632.33,193
+AirBlue,AI494,Islamabad,Delhi,2026-04-13,910.51,127
+Emirates,EM493,Mumbai,Frankfurt,2026-05-19,541.84,281
+Etihad,ET874,Cape Town,Tokyo,2025-10-29,632.77,194
+PIA,PI112,Singapore,London,2026-07-17,957.42,17
+British Airways,BR708,Dubai,Mumbai,2026-06-16,634.86,94
+SereneAir,SE178,Dubai,Lahore,2025-11-04,621.48,22
+Emirates,EM435,Lahore,Delhi,2026-01-23,246.78,289
+Etihad,ET642,Sydney,Abu Dhabi,2026-03-09,714.26,262
+Emirates,EM470,New York,Islamabad,2025-12-04,118.82,185
+SereneAir,SE130,Delhi,Singapore,2026-03-07,211.97,183
+SereneAir,SE236,London,Karachi,2026-04-27,495.54,294
+Etihad,ET504,Mumbai,London,2026-01-31,159.88,240
+British Airways,BR874,Singapore,Dubai,2026-01-02,525.87,249
+British Airways,BR517,Frankfurt,Delhi,2026-07-13,167.48,229
+Emirates,EM948,Karachi,Dubai,2026-09-03,136.03,160
+Lufthansa,LU444,Dubai,Mumbai,2025-11-02,379.06,104
+Etihad,ET266,London,Karachi,2025-12-12,943.21,185
+Turkish Airlines,TU120,Delhi,Mumbai,2026-08-14,447.24,55
+Turkish Airlines,TU745,Frankfurt,Sydney,2026-09-16,686.47,29
+SereneAir,SE959,Bangkok,New York,2025-12-06,948.15,193
+AirBlue,AI247,Delhi,Dubai,2026-09-02,333.38,242
+Emirates,EM648,Bangkok,Abu Dhabi,2026-06-15,238.36,86
+PIA,PI149,Doha,Karachi,2026-08-28,737.46,129
+SereneAir,SE205,Lahore,Beijing,2026-07-02,450.24,110
+Etihad,ET169,Lahore,Bangkok,2026-02-13,296.74,178
+Lufthansa,LU112,Mumbai,Bangkok,2026-04-09,294.98,168
+SereneAir,SE960,Islamabad,Dubai,2026-08-02,778.3,185
+British Airways,BR407,Bangkok,Singapore,2026-01-22,557.83,227
+Emirates,EM718,Abu Dhabi,Mumbai,2026-06-19,759.07,135
+Lufthansa,LU826,Singapore,Bangkok,2026-07-27,654.51,251
+PIA,PI897,New York,Bangkok,2026-02-14,741.14,210
+PIA,PI984,Istanbul,Sydney,2026-01-19,723.5,284
+AirBlue,AI326,Beijing,Frankfurt,2025-10-04,112.59,232
+AirBlue,AI717,Doha,Cape Town,2026-05-28,581.26,65
+British Airways,BR456,Islamabad,Abu Dhabi,2025-11-27,321.47,100
+PIA,PI977,Karachi,Cape Town,2026-09-19,338.49,202
+AirBlue,AI510,Paris,Bangkok,2026-06-12,570.46,115
+Singapore Airlines,SI448,Cape Town,Mumbai,2026-06-09,796.54,231
+AirBlue,AI207,Istanbul,Dubai,2025-12-06,155.26,121
+Turkish Airlines,TU858,Bangkok,Dubai,2026-07-17,697.0,281
+SereneAir,SE440,Islamabad,Bangkok,2026-07-12,140.56,181
+Etihad,ET140,Delhi,Dubai,2026-02-23,316.83,194
+AirBlue,AI704,Singapore,Toronto,2026-07-16,508.83,266
+Emirates,EM685,Paris,Lahore,2025-12-13,329.03,85
+SereneAir,SE601,Tokyo,New York,2026-04-07,508.25,218
+PIA,PI836,Dubai,Karachi,2025-11-23,946.1,14
+Turkish Airlines,TU448,Paris,Karachi,2026-05-01,733.39,148
+Turkish Airlines,TU757,Delhi,Beijing,2026-01-18,197.11,107
+British Airways,BR421,Cape Town,Abu Dhabi,2026-02-17,715.54,191
+SereneAir,SE446,Dubai,Cape Town,2026-07-08,851.98,32
+Qatar Airways,QA642,Frankfurt,Bangkok,2026-08-14,487.78,58
+PIA,PI914,Istanbul,Delhi,2026-06-01,186.76,161
+British Airways,BR414,Lahore,Tokyo,2026-05-23,370.34,158
+SereneAir,SE170,Abu Dhabi,Istanbul,2026-05-28,389.3,298
+Lufthansa,LU713,New York,Delhi,2025-10-30,128.56,46
+Lufthansa,LU832,Doha,New York,2026-08-23,921.76,58
+Qatar Airways,QA388,Islamabad,Mumbai,2026-03-18,283.2,37
+PIA,PI707,Delhi,Doha,2026-02-02,339.65,108
+Singapore Airlines,SI912,Cape Town,Doha,2026-08-22,482.78,221
+SereneAir,SE799,Toronto,Karachi,2025-12-06,560.96,171
+AirBlue,AI970,Bangkok,Dubai,2025-10-03,408.62,195
+AirBlue,AI642,Frankfurt,Lahore,2026-07-19,600.94,104
+Turkish Airlines,TU610,Lahore,Tokyo,2026-08-13,711.68,250
+Lufthansa,LU618,Paris,Bangkok,2025-12-10,967.72,138
+Turkish Airlines,TU347,Lahore,New York,2026-07-28,698.91,203
+Turkish Airlines,TU260,Islamabad,Doha,2026-09-09,934.53,267
+SereneAir,SE263,Tokyo,Cape Town,2025-12-06,591.16,43
+AirBlue,AI363,Lahore,Singapore,2026-08-30,768.69,297
+Etihad,ET884,Tokyo,Toronto,2026-05-18,906.62,256
+AirBlue,AI603,Bangkok,Lahore,2025-12-14,193.79,24
+AirBlue,AI952,New York,Lahore,2026-03-19,146.8,138
+Lufthansa,LU866,New York,Beijing,2026-08-24,423.15,81
+Emirates,EM677,Delhi,Frankfurt,2026-02-17,952.39,227
+SereneAir,SE294,Toronto,New York,2026-03-25,303.79,11
+Singapore Airlines,SI836,Sydney,Abu Dhabi,2025-12-03,128.14,116
+SereneAir,SE705,Singapore,Lahore,2025-11-14,135.3,192
+PIA,PI581,Delhi,Beijing,2026-09-29,208.54,77
+PIA,PI403,Delhi,Mumbai,2025-10-03,369.22,62
+British Airways,BR530,Abu Dhabi,Dubai,2025-12-21,537.22,295
+Etihad,ET996,Dubai,Abu Dhabi,2026-02-02,268.41,36
+Qatar Airways,QA687,Beijing,Dubai,2026-04-30,154.08,260
+SereneAir,SE902,Bangkok,Frankfurt,2026-09-12,816.87,255
+SereneAir,SE149,Cape Town,Islamabad,2025-10-30,979.19,106
+Lufthansa,LU315,Islamabad,Karachi,2026-01-06,588.75,207
+Singapore Airlines,SI981,Mumbai,Beijing,2026-07-19,362.45,268
+PIA,PI114,Tokyo,Sydney,2025-11-06,971.65,171
+Lufthansa,LU278,Mumbai,Dubai,2026-06-21,977.78,12
+AirBlue,AI627,Toronto,Lahore,2026-08-01,230.1,212
+Etihad,ET101,New York,Karachi,2026-03-25,343.0,249
+SereneAir,SE806,New York,Delhi,2026-01-24,958.56,18
+Lufthansa,LU373,Bangkok,Karachi,2026-01-25,980.08,276
+Lufthansa,LU458,Bangkok,Dubai,2026-09-07,675.57,230
+Etihad,ET757,London,Karachi,2026-03-18,716.13,178
+Lufthansa,LU115,Abu Dhabi,Mumbai,2026-09-17,600.13,231
+Emirates,EM289,Tokyo,Beijing,2026-01-21,321.32,277
+SereneAir,SE470,Singapore,Toronto,2026-07-03,269.02,271
+Emirates,EM533,Islamabad,London,2026-04-10,851.65,286
+SereneAir,SE761,New York,Beijing,2026-07-20,910.39,129
+SereneAir,SE206,Delhi,Dubai,2026-08-03,545.94,25
+Qatar Airways,QA837,Singapore,Toronto,2026-03-17,888.62,63
+Lufthansa,LU226,Doha,London,2026-07-15,237.44,87
+Singapore Airlines,SI877,Mumbai,Beijing,2026-09-14,416.98,68
+Turkish Airlines,TU537,Istanbul,Paris,2025-11-13,570.77,200
+PIA,PI120,London,Frankfurt,2026-05-30,814.55,33
+SereneAir,SE103,Lahore,Islamabad,2026-07-15,761.32,51
+SereneAir,SE383,Karachi,Frankfurt,2026-07-31,668.57,174
+Emirates,EM918,Singapore,Bangkok,2026-04-18,666.99,256
+Qatar Airways,QA445,Singapore,Abu Dhabi,2026-03-10,307.99,92
+British Airways,BR129,Cape Town,Beijing,2026-05-30,650.25,30
+SereneAir,SE524,Singapore,Doha,2025-12-05,654.6,52
+Emirates,EM823,Lahore,Sydney,2026-09-04,962.98,76
+SereneAir,SE576,Paris,Abu Dhabi,2026-08-27,502.14,36
+Lufthansa,LU785,Karachi,Abu Dhabi,2025-10-14,792.77,117
+Lufthansa,LU947,Singapore,Mumbai,2026-08-16,329.2,215
+British Airways,BR633,Paris,Toronto,2026-08-07,427.45,70
+Turkish Airlines,TU246,Bangkok,Frankfurt,2026-08-14,889.22,229
+AirBlue,AI475,Paris,Doha,2026-02-05,408.6,178
+Singapore Airlines,SI157,Beijing,Dubai,2026-09-11,280.05,149
+Singapore Airlines,SI504,Singapore,Doha,2026-09-04,724.45,192
+British Airways,BR786,New York,Bangkok,2026-07-08,154.07,238
+Lufthansa,LU932,Frankfurt,Doha,2026-04-13,943.02,24
+Turkish Airlines,TU557,Singapore,Tokyo,2025-12-23,737.92,82
+SereneAir,SE453,Mumbai,Karachi,2025-11-18,416.31,178
+Singapore Airlines,SI576,Lahore,New York,2026-01-24,692.38,287
+AirBlue,AI660,Dubai,Istanbul,2025-12-11,828.36,157
+Turkish Airlines,TU969,Singapore,Istanbul,2026-06-22,568.84,172
+Qatar Airways,QA333,Beijing,New York,2026-05-23,557.2,265
+Lufthansa,LU628,Lahore,Mumbai,2026-03-06,978.94,211
+Etihad,ET834,New York,Mumbai,2026-09-27,245.94,45
+Etihad,ET257,Toronto,Lahore,2026-09-03,953.63,247
+Singapore Airlines,SI597,Toronto,Abu Dhabi,2026-04-21,367.31,212
+Etihad,ET543,Singapore,Lahore,2026-08-04,526.47,285
+AirBlue,AI326,Paris,Istanbul,2026-02-18,297.32,53
+Etihad,ET946,Dubai,Doha,2026-06-02,612.16,65
+British Airways,BR282,Frankfurt,Lahore,2026-08-12,266.09,166
+Singapore Airlines,SI573,Karachi,Cape Town,2025-10-26,813.99,193
+Turkish Airlines,TU644,Delhi,Sydney,2025-10-21,290.04,152
+PIA,PI414,Istanbul,Karachi,2025-11-28,688.91,168
+Emirates,EM686,Frankfurt,London,2026-05-11,843.25,275
+PIA,PI779,Lahore,Islamabad,2026-08-07,730.34,151
+SereneAir,SE666,London,Lahore,2025-12-25,504.82,18
+British Airways,BR310,Delhi,Toronto,2026-07-31,191.12,118
+Etihad,ET236,Lahore,Beijing,2026-06-23,494.26,177
+Qatar Airways,QA461,New York,Singapore,2026-03-02,234.25,215
+Etihad,ET747,London,Istanbul,2025-10-09,658.64,194
+Qatar Airways,QA406,Toronto,Singapore,2026-04-08,821.67,131
+AirBlue,AI191,Istanbul,Cape Town,2026-01-30,747.76,168
+Singapore Airlines,SI693,Abu Dhabi,Istanbul,2026-01-25,789.12,283
+AirBlue,AI589,Mumbai,Frankfurt,2026-02-13,736.08,37
+Qatar Airways,QA592,Abu Dhabi,Karachi,2026-01-11,760.07,173
+Turkish Airlines,TU596,Tokyo,Toronto,2026-04-17,583.89,176
+Singapore Airlines,SI705,Tokyo,Toronto,2026-07-09,535.68,203
+SereneAir,SE730,Dubai,Cape Town,2026-09-29,899.73,133
+Turkish Airlines,TU164,Toronto,Paris,2026-03-07,902.28,293
+PIA,PI363,Karachi,Sydney,2025-12-15,805.59,45
+British Airways,BR530,London,Singapore,2026-02-21,987.02,138
+Singapore Airlines,SI437,New York,Singapore,2026-05-02,247.91,240
+SereneAir,SE368,Islamabad,Frankfurt,2026-07-21,340.27,107
+AirBlue,AI106,Lahore,Beijing,2025-10-24,830.0,136
+Lufthansa,LU459,New York,Doha,2026-06-25,185.99,269
+British Airways,BR731,London,Toronto,2025-12-09,139.22,95
+Lufthansa,LU582,Lahore,Istanbul,2026-07-23,924.86,16
+Qatar Airways,QA644,Cape Town,Singapore,2025-10-03,795.36,89
+PIA,PI375,Cape Town,Sydney,2026-05-17,358.54,215
+PIA,PI451,Bangkok,Lahore,2025-10-24,470.11,184
+Emirates,EM833,Dubai,Singapore,2026-07-10,800.94,268
+Lufthansa,LU815,Karachi,Cape Town,2026-09-30,218.75,90
+Turkish Airlines,TU398,Doha,Paris,2026-05-18,953.22,171
+Etihad,ET239,Abu Dhabi,Singapore,2025-11-10,627.33,110
+PIA,PI298,Delhi,Sydney,2026-05-12,419.21,66
+SereneAir,SE291,Doha,Beijing,2025-12-04,679.59,10
+PIA,PI861,Dubai,Paris,2025-12-26,595.74,295
+British Airways,BR860,Sydney,Cape Town,2026-03-24,200.27,143
+PIA,PI443,Islamabad,Karachi,2026-05-28,753.8,147
+British Airways,BR594,London,New York,2025-10-30,515.46,96
+Singapore Airlines,SI736,Doha,Lahore,2025-11-16,822.94,174
+Singapore Airlines,SI549,Dubai,Toronto,2026-02-23,279.07,195
+Lufthansa,LU303,Sydney,Singapore,2026-08-25,500.84,56
+Lufthansa,LU991,Mumbai,Abu Dhabi,2025-11-13,562.75,186
+Lufthansa,LU835,Bangkok,Abu Dhabi,2026-06-25,877.94,15
+PIA,PI789,Beijing,Sydney,2026-04-30,480.64,103
+Emirates,EM586,Istanbul,Doha,2025-11-06,239.67,298
+Etihad,ET197,Beijing,Singapore,2026-02-10,730.49,172
+Qatar Airways,QA480,Dubai,Istanbul,2026-05-28,696.72,14
+Singapore Airlines,SI339,Istanbul,Frankfurt,2026-05-06,422.89,231
+Singapore Airlines,SI144,Dubai,Abu Dhabi,2026-07-30,571.34,125
+Etihad,ET522,Beijing,Tokyo,2026-04-14,249.63,237
+Etihad,ET390,Tokyo,Abu Dhabi,2026-03-10,278.81,296
+SereneAir,SE667,Delhi,Islamabad,2026-06-07,681.58,143
+British Airways,BR845,Delhi,Sydney,2026-04-28,659.67,106
+Singapore Airlines,SI455,Lahore,Tokyo,2026-07-03,441.44,55
+AirBlue,AI975,Bangkok,London,2026-08-21,690.96,38
+AirBlue,AI592,Islamabad,Istanbul,2026-05-31,733.89,282
+Etihad,ET494,Mumbai,Frankfurt,2025-11-13,593.29,126
+Singapore Airlines,SI615,Dubai,Islamabad,2025-11-20,104.02,216
+Lufthansa,LU559,Toronto,Dubai,2026-07-08,702.86,119
+British Airways,BR664,Tokyo,Dubai,2025-11-04,831.96,46
+Etihad,ET200,London,Istanbul,2026-09-27,877.31,263
+AirBlue,AI570,Tokyo,Doha,2025-11-21,935.37,189
+Turkish Airlines,TU269,London,Toronto,2026-08-22,467.75,97
+British Airways,BR709,Bangkok,Islamabad,2026-03-24,349.84,183
+Qatar Airways,QA580,Islamabad,New York,2026-02-01,297.8,79
+British Airways,BR440,Sydney,Mumbai,2026-04-07,666.02,157
+Singapore Airlines,SI497,Singapore,Islamabad,2026-06-09,708.53,41
+Turkish Airlines,TU522,Istanbul,Beijing,2025-12-06,327.11,275
+British Airways,BR323,Delhi,Tokyo,2026-02-18,474.53,241
+PIA,PI511,Singapore,Cape Town,2025-10-17,899.82,45
+British Airways,BR337,Mumbai,Bangkok,2026-05-07,675.89,182
+Turkish Airlines,TU915,London,Singapore,2026-06-27,742.39,282
+British Airways,BR511,Abu Dhabi,Paris,2025-12-02,725.72,104
+Etihad,ET742,Abu Dhabi,Cape Town,2026-01-29,824.35,241
+AirBlue,AI131,Sydney,Frankfurt,2026-06-10,743.56,175
+British Airways,BR704,Karachi,Islamabad,2026-05-01,641.63,136
+PIA,PI357,Karachi,Dubai,2026-03-06,137.61,192
+British Airways,BR340,Sydney,Mumbai,2026-01-10,383.58,153
+Etihad,ET786,London,Abu Dhabi,2026-01-27,969.02,10
+SereneAir,SE615,Dubai,London,2026-06-21,470.85,270
+SereneAir,SE324,Dubai,Doha,2026-04-29,408.01,216
+AirBlue,AI679,Singapore,Cape Town,2025-12-19,864.37,297
+PIA,PI139,New York,London,2026-03-13,399.59,135
+Etihad,ET135,Mumbai,Bangkok,2026-04-28,697.01,235
+PIA,PI711,Dubai,Doha,2025-10-14,326.04,158
+Emirates,EM767,Doha,Bangkok,2026-05-15,294.31,40
+PIA,PI909,Lahore,Beijing,2026-07-20,434.22,217
+Emirates,EM213,Sydney,Bangkok,2026-06-15,452.98,200
+Emirates,EM205,Mumbai,Islamabad,2026-09-10,218.97,223
+Lufthansa,LU240,Dubai,London,2025-12-06,314.26,60
+SereneAir,SE890,Dubai,Toronto,2026-01-23,812.42,299
+Etihad,ET192,Abu Dhabi,Toronto,2026-09-24,157.55,145
+AirBlue,AI417,Islamabad,Paris,2026-06-21,942.58,192
+Singapore Airlines,SI731,Toronto,New York,2026-02-16,888.37,136
+Lufthansa,LU810,Dubai,Istanbul,2025-11-14,838.83,279
+PIA,PI497,Delhi,New York,2026-01-25,312.83,100
+PIA,PI448,Sydney,Frankfurt,2026-08-20,981.07,170
+Singapore Airlines,SI557,Dubai,Toronto,2025-11-27,962.56,142
+Singapore Airlines,SI321,Frankfurt,Bangkok,2026-03-20,411.34,231
+Qatar Airways,QA541,Paris,Bangkok,2026-04-27,657.97,158
+Emirates,EM850,Bangkok,London,2026-07-24,852.41,114
+SereneAir,SE624,Frankfurt,London,2026-09-08,171.15,166
+Lufthansa,LU392,Abu Dhabi,Sydney,2026-06-06,961.09,298
+British Airways,BR563,Islamabad,Karachi,2026-04-08,146.54,244
+AirBlue,AI247,Mumbai,Singapore,2026-08-27,458.19,145
+PIA,PI578,New York,Dubai,2026-05-27,122.81,201
+Etihad,ET562,Mumbai,Istanbul,2026-06-14,443.58,220
+Singapore Airlines,SI273,Karachi,New York,2026-01-29,310.15,275
+SereneAir,SE196,Istanbul,Beijing,2026-08-26,292.32,157
+Qatar Airways,QA947,Frankfurt,Islamabad,2025-12-09,104.84,181
+Turkish Airlines,TU982,Toronto,Bangkok,2025-11-02,707.44,248
+PIA,PI903,Istanbul,Doha,2025-12-02,699.1,269
+SereneAir,SE764,Frankfurt,Paris,2026-01-16,728.36,215
+Emirates,EM609,Bangkok,Beijing,2025-11-18,878.71,205
+Turkish Airlines,TU209,Dubai,Islamabad,2026-08-19,307.85,299
+Emirates,EM600,Karachi,Sydney,2026-05-30,770.55,132
+Qatar Airways,QA359,Tokyo,Mumbai,2025-12-17,314.82,286
+AirBlue,AI542,Cape Town,Delhi,2026-06-29,292.09,129
+SereneAir,SE908,Islamabad,Istanbul,2026-03-26,635.26,127
+Emirates,EM881,New York,Istanbul,2025-12-24,383.52,13
+Lufthansa,LU223,Abu Dhabi,Bangkok,2026-08-21,707.09,113
+AirBlue,AI432,Paris,Bangkok,2026-02-25,665.21,173
+Etihad,ET263,Beijing,Paris,2025-10-04,243.4,127
+Qatar Airways,QA202,Dubai,Karachi,2025-11-18,180.02,223
+SereneAir,SE985,Beijing,Mumbai,2025-12-04,849.99,41
+Etihad,ET558,Paris,Sydney,2025-10-23,204.47,137
+AirBlue,AI248,Karachi,Tokyo,2026-09-26,944.18,140
+Qatar Airways,QA758,Bangkok,Islamabad,2025-12-31,842.24,97
+SereneAir,SE218,New York,London,2026-09-29,768.9,52
+PIA,PI252,Cape Town,Abu Dhabi,2026-09-10,386.45,21
+Singapore Airlines,SI448,Frankfurt,Lahore,2026-05-13,233.65,118
+Singapore Airlines,SI506,Lahore,Beijing,2026-08-12,912.25,29
+British Airways,BR360,Frankfurt,Abu Dhabi,2026-02-15,994.88,158
+British Airways,BR958,Singapore,New York,2026-01-08,952.28,192
+Turkish Airlines,TU836,Cape Town,Abu Dhabi,2025-11-25,180.31,107
+Etihad,ET946,Tokyo,Toronto,2025-12-01,387.66,193
+AirBlue,AI591,Doha,Mumbai,2026-02-25,926.31,174
+Lufthansa,LU772,Toronto,Istanbul,2025-12-28,330.82,178
+British Airways,BR165,Lahore,Cape Town,2026-08-31,736.69,52
+Qatar Airways,QA986,Dubai,Istanbul,2025-12-14,718.04,81
+Lufthansa,LU648,Toronto,Tokyo,2026-04-03,603.69,143
+PIA,PI297,London,Paris,2025-12-20,753.28,78
+AirBlue,AI752,Bangkok,Frankfurt,2026-07-23,471.36,256
+Emirates,EM693,Islamabad,Paris,2026-01-29,382.15,75
+SereneAir,SE311,Mumbai,Singapore,2026-04-15,491.73,18
+Lufthansa,LU617,Karachi,Bangkok,2026-05-14,464.19,115
+Qatar Airways,QA671,Dubai,London,2026-07-13,549.5,49
+Singapore Airlines,SI249,Mumbai,Lahore,2025-11-20,135.37,287
+Turkish Airlines,TU523,London,Mumbai,2025-11-09,508.13,121
+PIA,PI555,Islamabad,Tokyo,2026-07-20,251.95,119
+Emirates,EM366,Cape Town,Sydney,2026-06-18,847.75,154
+PIA,PI180,Mumbai,Frankfurt,2026-07-05,360.18,286
+SereneAir,SE503,New York,Karachi,2026-01-10,569.12,208
+AirBlue,AI968,Bangkok,Lahore,2026-03-29,823.92,121
+Turkish Airlines,TU187,Islamabad,Cape Town,2025-12-07,972.81,65
+Etihad,ET322,New York,Singapore,2026-08-13,779.12,293
+Emirates,EM783,Cape Town,London,2026-01-20,242.81,91
+Etihad,ET747,Cape Town,Paris,2026-03-25,952.97,147
+AirBlue,AI862,Mumbai,Singapore,2026-01-24,950.95,119
+Lufthansa,LU894,Islamabad,London,2026-07-18,446.52,130
+Turkish Airlines,TU932,Dubai,Paris,2026-03-05,750.93,288
+Qatar Airways,QA170,Frankfurt,Tokyo,2026-03-26,620.42,143
+Turkish Airlines,TU562,London,Cape Town,2025-10-03,258.93,62
+Emirates,EM248,Delhi,New York,2025-11-29,350.6,70
+British Airways,BR665,Beijing,Toronto,2026-06-05,965.36,51
+Qatar Airways,QA483,Mumbai,Delhi,2026-04-16,976.32,68
+AirBlue,AI500,Delhi,Doha,2025-10-13,858.87,157
+PIA,PI438,Abu Dhabi,Beijing,2025-12-29,597.52,122
+Qatar Airways,QA489,Sydney,New York,2026-02-25,790.18,81
+British Airways,BR823,Paris,Doha,2025-10-25,266.94,114
+Qatar Airways,QA473,Sydney,Lahore,2026-07-10,122.64,77
+Singapore Airlines,SI316,Bangkok,Istanbul,2025-12-10,243.69,130
+Lufthansa,LU434,Dubai,Frankfurt,2026-02-12,650.1,277
+Turkish Airlines,TU133,Karachi,Abu Dhabi,2026-07-25,161.9,65
+British Airways,BR311,Istanbul,Bangkok,2026-09-14,189.97,268
+British Airways,BR541,Lahore,Dubai,2026-07-28,927.72,132
+Singapore Airlines,SI250,Paris,Karachi,2026-08-18,142.37,188
+Lufthansa,LU389,Cape Town,Bangkok,2025-11-10,857.01,298
+Etihad,ET385,Singapore,Paris,2026-08-13,867.32,300
+PIA,PI229,Karachi,Sydney,2026-02-14,309.58,243
+Singapore Airlines,SI450,Frankfurt,Tokyo,2025-12-25,835.14,55
+Etihad,ET586,Karachi,New York,2025-11-20,706.47,122
+Lufthansa,LU562,Sydney,Cape Town,2026-07-04,676.75,214
+Singapore Airlines,SI689,Istanbul,Singapore,2026-05-28,689.82,183
+Turkish Airlines,TU141,Toronto,Doha,2025-11-28,763.17,138
+Etihad,ET550,Sydney,Bangkok,2026-06-01,114.33,107
+Turkish Airlines,TU865,Beijing,London,2026-05-31,977.79,226
+Turkish Airlines,TU309,Paris,Beijing,2026-01-20,909.33,79
+SereneAir,SE272,Istanbul,Dubai,2025-11-30,254.0,148
+Singapore Airlines,SI210,Singapore,Abu Dhabi,2026-07-15,225.18,251
+Singapore Airlines,SI808,Beijing,Bangkok,2026-08-29,779.41,177
+Emirates,EM540,Mumbai,Karachi,2026-02-20,114.15,146
+Qatar Airways,QA989,Dubai,New York,2026-02-20,152.31,290
+PIA,PI559,Tokyo,Bangkok,2025-10-09,317.34,265
+Emirates,EM225,Karachi,Abu Dhabi,2025-12-22,313.36,262

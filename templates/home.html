@@ -1,0 +1,36 @@
+{% load static%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{%static 'css/home.css'%}">
+</head>
+<body>
+
+<header>
+    <div class="logo">Chatbot</div>
+    <div class="nav">
+        <a href="{% url 'signup' %}">Sign Up</a>
+        <a href="{% url 'login' %}">Log In</a>
+    </div>
+</header>
+
+
+<div class="container">
+    <h1>Welcome to Chatbot</h1>
+    <p>
+        This chatbot helps your related questions
+    </p>
+</div>
+
+<footer id="footer">
+        <ul class="flex s-center w-80 m-auto my-2 res">
+            <li><a href="#details" class="poppinss">Details</a></li>
+            <li><a href="#terms of services" class="poppinss">Terms Of Services</a></li>
+            <li><a href="#help & faq" class="poppinss">Help & FAQ</a></li>
+            <li><a href="#privacy policy" class="poppinss">Privacy Policy</a></li>
+        </ul>
+
+</body>
+</html>
