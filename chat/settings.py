@@ -43,15 +43,11 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-
-    # ✅ Disable cache globally (recommended position)
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # ✅ Keep your custom middleware last
     'members.middleware.LoginRequiredMiddleware',
     'members.middleware.NoCacheForLoggedOutUsersMiddleware',
 ]
@@ -120,6 +116,18 @@ DATABASES = {
             'charset': 'utf8mb4',
             'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
         },
+    }
+}
+
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",  
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "IGNORE_EXCEPTIONS": True,  
+        }
     }
 }
 

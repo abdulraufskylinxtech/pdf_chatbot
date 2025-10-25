@@ -70,13 +70,12 @@
 
     {% if response %}
     <div class="chat-output">
-      {% if chat_history %}
-      {% with last_chat=chat_history|last %}
+      {% if last_chat %}
       <div class="user-question">
         <strong>You:</strong> {{ last_chat.question }}
       </div>
-      {% endwith %}
       {% endif %}
+
 
       <div class="bot-answer">
         <strong>Bot:</strong> {{ response|linebreaksbr }}
@@ -92,7 +91,7 @@
           <strong>{{ forloop.counter }}.</strong>
           {{ ref.text }}
           <small>
-            Page: {{ ref.page_no }}, Lines: {{ ref.line }}, Similarity: {{ ref.similarity }}
+            Page: {{ ref.page_no }}
           </small>
 
         </div>

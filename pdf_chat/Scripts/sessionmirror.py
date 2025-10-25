@@ -1,4 +1,4 @@
-#!E:\asad\chatbot\pdf_chatbot\pdf_chat\Scripts\python.exe
+#!D:\Python projects\pdf_chatbot-1\pdf_chat\Scripts\python.exe
 '''
 The MIT License (MIT)
 

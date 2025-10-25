@@ -55,20 +55,26 @@ class ChatbotQA(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=True,
+        null=False,
         blank=False,
         related_name="chatbot_qas",
     )
     uploaded_file = models.ForeignKey(
-        'UploadedFile',              # Use string to avoid circular import issues
-        on_delete=models.SET_NULL,   # Keep Q&A even if PDF is deleted
+        'UploadedFile',              
+        on_delete=models.SET_NULL,   
         null=True,
         blank=True,
-        related_name="chatbot_qas_files"
+        related_name="qa_from_file"
     )
     question = models.TextField()
     answer = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-created_at']     
+        verbose_name = "Chatbot QA"
+        verbose_name_plural = "Chatbot QAs"
+
     def __str__(self):
-        return f"{self.user.username} - {self.question[:50]}"
+        file_info = f" (File ID: {self.uploaded_file.id})" if self.uploaded_file else ""
+        return f"{self.user.username}{file_info} → {self.question[:50]}"

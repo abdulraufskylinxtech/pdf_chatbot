@@ -35,22 +35,12 @@ def delete_faiss_index(file_id, user_id):
 
 
 def clean_text_for_indexing(text):
-    # Remove BOMs, invisible characters
+
     text = text.replace("\ufeff", "").replace("\x00", "")
-    
-    # Replace newlines and tabs with space
     text = re.sub(r'[\r\n\t]+', ' ', text)
-
-    # Remove multiple spaces
     text = re.sub(r'\s+', ' ', text)
-
-    # Remove emojis and non-ASCII characters
     text = re.sub(r'[^\x00-\x7F]+', '', text)
-
-    # Optional: remove bullets, dashes, special symbols
     text = re.sub(r'[•\-\–\—]+', ' ', text)
-
-    # Remove extra punctuation
     text = text.translate(str.maketrans('', '', string.punctuation))
 
     return text.strip()
