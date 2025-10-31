@@ -30,7 +30,7 @@ class UploadedFile(models.Model):
     original_name = models.CharField(max_length=255)
     category = models.CharField(max_length=100)
     file = models.FileField(upload_to="uploads/")
-    extracted_text = models.TextField(blank=True, null=True)  # store extracted content
+    extracted_text = models.TextField(blank=True, null=True) 
     uploaded_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -78,3 +78,5 @@ class ChatbotQA(models.Model):
     def __str__(self):
         file_info = f" (File ID: {self.uploaded_file.id})" if self.uploaded_file else ""
         return f"{self.user.username}{file_info} → {self.question[:50]}"
+
+

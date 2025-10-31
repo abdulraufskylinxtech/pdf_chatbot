@@ -1,36 +1,144 @@
-{% load static%}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chatbot</title>
-    <link rel="stylesheet" href="{%static 'css/home.css'%}">
+    <title>ChatDOC | Chat with Your PDFs</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
+<!-- ===== Header ===== -->
 <header>
-    <div class="logo">Chatbot</div>
-    <div class="nav">
-        <a href="{% url 'signup' %}">Sign Up</a>
-        <a href="{% url 'login' %}">Log In</a>
-    </div>
+    <div class="logo">ChatDOC<span class="dot">.</span></div>
+    <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#how">How It Works</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="{% url 'signup' %}" class="signup-btn">Sign Up</a>
+        <a href="{% url 'login' %}" class="login-btn">Log In</a>
+    </nav>
 </header>
 
+<!-- ===== Hero Section ===== -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Chat Directly With Your Documents</h1>
+        <p>Upload any PDF — textbooks, research papers, reports — and ask questions.  
+           ChatDOC gives instant, intelligent answers using AI.</p>
+        <div class="cta-buttons">
+            <a href="{% url 'signup' %}" class="btn-primary">Get Started</a>
+            <a href="{% url 'login' %}" class="btn-secondary">Try Demo</a>
+        </div>
+    </div>
+    <img src="{% static 'images/chatbot_illustration.png' %}" alt="Chatbot Illustration" class="hero-img">
+</section>
 
-<div class="container">
-    <h1>Welcome to Chatbot</h1>
+<!-- ===== Features ===== -->
+<section id="features" class="features">
+    <h2>Powerful Features</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <img src="{% static 'images/pdf_icon.png' %}" alt="Upload PDF">
+            <h3>Upload Any PDF</h3>
+            <p>Supports textbooks, manuals, and reports — instantly processed for AI chat.</p>
+        </div>
+        <div class="feature-card">
+            <img src="{% static 'images/ai_icon.png' %}" alt="AI Powered">
+            <h3>AI Understanding</h3>
+            <p>Uses advanced LLaMA & FAISS models to extract accurate, human-like answers.</p>
+        </div>
+        <div class="feature-card">
+            <img src="{% static 'images/search_icon.png' %}" alt="Smart Search">
+            <h3>Smart Search</h3>
+            <p>Finds the exact section or paragraph related to your question within seconds.</p>
+        </div>
+        <div class="feature-card">
+            <img src="{% static 'images/security_icon.png' %}" alt="Secure">
+            <h3>Secure & Private</h3>
+            <p>Your documents are encrypted and not stored permanently — total privacy guaranteed.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== How It Works ===== -->
+<section id="how" class="how-it-works">
+    <h2>How ChatDOC Works</h2>
+    <div class="steps">
+        <div class="step">
+            <span>1</span>
+            <h3>Upload PDF</h3>
+            <p>Simply upload your document — no format issues, just drag and drop.</p>
+        </div>
+        <div class="step">
+            <span>2</span>
+            <h3>Ask Questions</h3>
+            <p>Type your question in the chatbot — like talking to an expert!</p>
+        </div>
+        <div class="step">
+            <span>3</span>
+            <h3>Get Instant Answers</h3>
+            <p>AI instantly reads and replies with accurate, document-based answers.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ===== About Section ===== -->
+<section id="about" class="about">
+    <h2>About ChatDOC</h2>
     <p>
-        This chatbot helps your related questions
+        ChatDOC is an intelligent document assistant developed by professionals in AI and software engineering.  
+        It helps students, researchers, and organizations easily extract knowledge from large PDF files.  
+        Built using Python, Django, FAISS, and LLaMA for maximum accuracy and speed.
     </p>
-</div>
+</section>
 
-<footer id="footer">
-        <ul class="flex s-center w-80 m-auto my-2 res">
-            <li><a href="#details" class="poppinss">Details</a></li>
-            <li><a href="#terms of services" class="poppinss">Terms Of Services</a></li>
-            <li><a href="#help & faq" class="poppinss">Help & FAQ</a></li>
-            <li><a href="#privacy policy" class="poppinss">Privacy Policy</a></li>
+<!-- ===== Testimonials ===== -->
+<section class="testimonials">
+    <h2>What Our Users Say</h2>
+    <div class="testimonial-grid">
+        <div class="testimonial-card">
+            <p>“ChatDOC saved hours of my research time. I just upload a report and get answers instantly!”</p>
+            <h4>— Sarah, Data Analyst</h4>
+        </div>
+        <div class="testimonial-card">
+            <p>“Perfect for my students! They can ask questions directly from course books.”</p>
+            <h4>— Mr. Ali, Computer Science Teacher</h4>
+        </div>
+        <div class="testimonial-card">
+            <p>“The best AI PDF chatbot I’ve ever used. Fast, accurate, and beautifully designed.”</p>
+            <h4>— John, Software Developer</h4>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Contact Section ===== -->
+<section id="contact" class="contact">
+    <h2>Contact Us</h2>
+    <p>Have a question or want a custom version for your organization? Let’s talk.</p>
+    <form class="contact-form">
+        <input type="text" placeholder="Your Name" required>
+        <input type="email" placeholder="Your Email" required>
+        <textarea placeholder="Your Message" rows="4" required></textarea>
+        <button type="submit">Send Message</button>
+    </form>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+    <div class="footer-content">
+        <p>© {{ now|date:"Y" }} ChatDOC. All rights reserved.</p>
+        <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how">How It Works</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#privacy">Privacy Policy</a></li>
         </ul>
+    </div>
+</footer>
 
 </body>
 </html>

@@ -20,6 +20,7 @@ from .utils import (
     make_sentence_embeddings,
     find_best_sentence_answer
 )
+import pandas as pd
 import faiss
 import traceback
 import pickle
@@ -35,12 +36,12 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize,PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktParameters
 
-nltk.data.path.append(r'D:\Python projects\pdf_chatbot-1\pdf_chat\nltk_data')
+nltk.data.path.append(r'D:\Python projects\pdf_chatbot\pdf_chat\nltk_data')
 for pkg in ['punkt', 'punkt_tab']:
     try:
         nltk.data.find(f'tokenizers/{pkg}')
     except LookupError:
-        nltk.download(pkg, download_dir=r"D:\Python projects\pdf_chatbot-1\pdf_chat\nltk_data")
+        nltk.download(pkg, download_dir=r"D:\Python projects\pdf_chatbot\pdf_chat\nltk_data")
 nltk.download('stopwords')
 
 punkt_param = PunktParameters()
@@ -50,8 +51,8 @@ tokenizer = PunktSentenceTokenizer(punkt_param)
 # embed_model = SentenceTransformer("Adel-Elwan/msmarco-bert-base-dot-v5-fine-tuned-AI")
 
 llm = Llama(
-    model_path = "D:/Python projects/pdf_chatbot-1/models/llama-2-7b-chat.Q4_K_M.gguf",
-    n_ctx=4096,  
+    model_path = "D:/Python projects/pdf_chatbot/models/llama-2-7b-chat.Q4_K_M.gguf",
+    n_ctx=8192,  
     n_threads=8,
     n_gpu_layers=0,
 )
@@ -65,12 +66,10 @@ MAX_HISTORY = 50
 REDIS_TTL_SECONDS = 60 
 
 
-
-INDEX_PATH = "D:/Python projects/pdf_chatbot-1/faiss_index"
+INDEX_PATH = "D:/Python projects/pdf_chatbot/faiss_index"
 os.makedirs(INDEX_PATH, exist_ok=True)
 
 LOCAL_LLM_URL = "http://127.0.0.1:8000/v1/chat/completions"  
-
 
 
 FAISS_DIR = os.path.join(settings.BASE_DIR, "faiss_indexes")
@@ -83,20 +82,12 @@ def remove_emojis_and_special_chars(text):
 
 
 def extract_text_from_file(file_path):
-    import pandas as pd
     text = ""
     ext = os.path.splitext(file_path)[1].lower()
 
     try:
         if ext == ".pdf":
             text = extract_text_from_pdf_with_fitz(file_path)
-            text = re.sub(r"(?i)copyright.*?reserved", "", text)
-            text = re.sub(r"(?i)licensee=.*", "", text)
-            text = re.sub(r"(?i)no reproduction.*", "", text)
-            text = re.sub(r"ISO\s*\d{3,5}(:\d{4})?", "", text)
-            text = re.sub(r"[`\-,‘’“”\'\"•▪●★→⇒✓■□△▲▶▶️❖\*]+", " ", text)
-            text = re.sub(r"\bPage\s*\d+\b", "", text)
-            text = re.sub(r"\s{2,}", " ", text).strip()
             
         elif ext == ".csv":
             df = pd.read_csv(file_path, encoding="utf-8", engine="python")
@@ -158,7 +149,6 @@ def extract_text_from_pdf_with_fitz(path):
     return clean_extracted_text_preserve_lines(full_text)
 
 
-
 def clean_extracted_text(text):
     """Sanitize text while preserving paragraph structure."""
     if not text:
@@ -183,53 +173,67 @@ def clean_extracted_text(text):
     return "\n".join(lines)
 
 
-def clean_extracted_text_preserve_lines(text):
-    """Clean text lightly but keep paragraph and line structure."""
-    text = text.replace("\ufeff", "").replace("\x00", "")
-    text = re.sub(r'(?i)copyright.*?(iso|organization|standardization).*', '', text)
-    text = re.sub(r'(?i)no reproduction.*', '', text)
-    text = re.sub(r'(?i)licensee.*', '', text)
-    text = re.sub(r'(?i)provided by.*', '', text)
-    text = re.sub(r'(?i)all rights reserved.*', '', text)
-    text = re.sub(r'ISO\s*\d{3,5}(:\d{4})?', '', text)
+def clean_extracted_text_preserve_lines(text: str) -> str:
+    """Cleans and reconstructs PDF-extracted text while preserving paragraph structure."""
+
+    if not text:
+        return ""
+
+    text = text.replace("\ufeff", "").replace("\x00", "").replace("\xa0", " ")
+    text = re.sub(r'(?i)(copyright|all rights reserved|no reproduction|provided by|licensee|not for resale).*', '', text)
+    text = re.sub(r'(?i)ISO\s*\d{3,5}(:\d{4})?', '', text)
     text = re.sub(r'(?i)page\s*\d+', '', text)
     text = re.sub(r'(?i)reference number.*', '', text)
-    text = re.sub(r'(?i)(contents|table of contents|bibliography|foreword|introduction)\s+.*', '', text)
-    text = re.sub(r'Licensee=.*', '', text)
-    text = re.sub(r'Not for Resale.*', '', text)
+    # text = re.sub(r'(?i)(contents|table of contents|bibliography|foreword|introduction)\s+.*', '', text)
     text = re.sub(r'---+', '', text)
-    text = re.sub(r'^\s*\d+(\.\d+)*\s+', '', text, flags=re.MULTILINE)
     text = re.sub(r'[•·●▪▶►\-\–\—_,]+', ' ', text)
-    text = re.sub(r'\.{2,}', ' ', text)
     text = re.sub(r'[“”"\'`´]', '', text)
-    text = re.sub(r'[^a-zA-Z0-9.,? \n]+', ' ', text)
-    text = re.sub(r'\b[vx]{1,4}\b', '', text)
-    text = re.sub(r'\(\s*\)', '', text)  
-    text = re.sub(r'\b(E|F|G|A|B)\b(?=\))', '', text)  
-    text = re.sub(r'::+', ':', text)
-    text = re.sub(r' +', ' ', text)  
-    text = re.sub(r'(?<=\b[A-Z]) (?=[A-Z]+\b)', '', text) 
-    text = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', text)
-    text = re.sub(r"\(\s*\)", "", text)
-    text = re.sub(r"\bNOTE\b.*", "", text, flags=re.IGNORECASE)
-    text = re.sub(r"(?<=\b[a-zA-Z])\s(?=[a-zA-Z]{2,}\b)", "", text)
-    text = re.sub(r'\b([A-Z])\s+([a-z]{2,})\b', r'\1\2', text)
-    
+    text = re.sub(r'[=+*/\\|]+', ' ', text)
+    text = re.sub(r'[`´^¨~]', '', text)
+    text = re.sub(r'\.{2,}', '.', text)
+    text = re.sub(r'[.,;:!?]{2,}', '.', text)
+    text = re.sub(r'\(\s*\)', '', text)
+    text = re.sub(r'NOTE\s*[:\-]?.*', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\w)\s*\n\s*(\w)', r'\1 \2', text)
+    text = re.sub(r'\b([A-Za-z])\s(?=[a-z])', r'\1', text)
+    text = re.sub(r'(?<!\b(be|to|an|in|on|by|at|as|of|or|if|is|it|do|so|no))\b([A-Za-z])\s(?=[a-z])', r'\2', text)
+    text = re.sub(r'\b[A-Z]\)', '', text)
+    text = re.sub(r'\b\)', '', text)
+    text = re.sub(r'\(\s*[A-Za-z0-9]+\s*\)', '', text)
+    text = re.sub(r'([a-z0-9])([A-Z])', r'\1 \2', text)
+    text = re.sub(r'\s*([.,;:!?])\s*', r'\1 ', text)
+    text = re.sub(r'\s{2,}', ' ', text)
+
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    joined = []
+    buffer = ""
+
+    for line in lines:
+        if len(line) < 60 and not line.endswith(('.', ':')):
+            buffer += " " + line
+        else:
+            if buffer:
+                joined.append(buffer.strip())
+                buffer = ""
+            joined.append(line)
+
+    if buffer:
+        joined.append(buffer.strip())
+
+    clean_text = "\n".join(joined)
+    clean_text = re.sub(r'\n{2,}', '\n', clean_text).strip()
+
+    return clean_text
 
 
-    return text.strip()
-
-
-def build_faiss_index_from_text(text, index_path, chunk_size=600, overlap=50):
+def build_faiss_index_from_text(text, index_path, chunk_size=800, overlap=100):
     """
     Builds FAISS index + metadata with page and line references.
     Each chunk will include page_no, line_start, line_end info.
     """
     
-
     meta = []
 
-  
     pages = text.split("--- PAGE BREAK ---")
     chunks = []
     page_no = 1
@@ -283,14 +287,14 @@ def build_faiss_index_from_text(text, index_path, chunk_size=600, overlap=50):
     index = faiss.IndexFlatL2(dim)
     index.add(np.array(embeddings, dtype="float32"))
     faiss.write_index(index, index_path)
-
-    
+ 
     meta_path = index_path.replace(".index", "_meta.pkl")
     with open(meta_path, "wb") as f:
         pickle.dump({"chunks": chunks, "meta": meta}, f)
 
     print(f" Built FAISS index with {len(chunks)} chunks and metadata: {index_path}")
     return index_path
+
 
 def load_faiss_index(index_path):
     """
@@ -305,15 +309,12 @@ def load_faiss_index(index_path):
 
     if not os.path.exists(index_path) or not os.path.exists(meta_path):
         raise FileNotFoundError(f"Missing index or metadata for: {index_path}")
-
-    
+  
     index = faiss.read_index(index_path)
-
-   
+ 
     with open(meta_path, "rb") as f:
         meta_data = pickle.load(f)
-
-    
+  
     if isinstance(meta_data, list):
         chunks = meta_data
         meta = [{"page_no": None, "line_start": None, "line_end": None}] * len(chunks)
@@ -333,59 +334,45 @@ def delete_faiss_index(file_id, user_id):
         if os.path.exists(p):
             os.remove(p)
 
-def deep_clean_answer(text: str) -> str:
+
+def deep_clean_answer(text: str) -> list:
     """
-    Cleans text from unwanted patterns:
-    - ISO codes, section numbers, page numbers
-    - Source references like [SOURCE: ...]
-    - Excess punctuation, special symbols
-    - Converts text to clean bullet points format
+    Cleans and structures model-generated answers:
+    - Removes noise (ISO codes, section/page numbers)
+    - Fixes broken or spaced words
+    - Normalizes punctuation and spacing
+    - Returns properly formatted bullet sentences
     """
     if not text or not isinstance(text, str):
         return []
-    text = text.replace("\r", " ")
+
+    text = text.replace("\r", " ").replace("\n", " ")
     text = re.sub(r'\b\d+(\.\d+)*\b', '', text)
     text = re.sub(r'\bpage\s*\d+\b', '', text, flags=re.I)
     text = re.sub(r'\[SOURCE:.*?\]', '', text, flags=re.I)
-    text = re.sub(r'(\.{2,})', '.', text)
-    text = re.sub(r'\s{2,}', ' ', text)
-    text = re.sub(r'[^a-zA-Z0-9.,;:!?()\n ]', '', text)
-    text = re.sub(r'\s+', ' ', text)  
-    text = re.sub(r'(\.{2,}|,+|:+|;+|—+|–+)', '.', text)  
-    text = re.sub(r'\(\s*\)', '', text)  
-    text = re.sub(r'\b(E|F|G|A|B)\b(?=\))', '', text)  
-    text = re.sub(r'::+', ':', text)  
-    text = re.sub(r' +', ' ', text) 
-    text = re.sub(r'(?<=\b[A-Z]) (?=[A-Z]+\b)', '', text)  
-    text = re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', text)
     text = re.sub(r'Provided by.*?ANSI', '', text, flags=re.I)
-    text = re.sub(r"\b\d{1,3}\s*[.)]?\s*", "", text)
-    text = re.sub(r"(?m)^\s*[\-\*\•\·\●\▪\▶]+\s*", "", text)
     text = re.sub(r'All rights reserved.*?ISO', '', text, flags=re.I)
     text = re.sub(r'No reproduction.*?license', '', text, flags=re.I)
+    text = re.sub(r'(\.{2,}|,+|:+|;+|—+|–+)', '.', text)
     text = re.sub(r'[^a-zA-Z0-9.,;:!?()\n ]', '', text)
-    text = re.sub(r"\(\s*\)", "", text)
+    text = re.sub(r'\b\d{1,3}[A-Za-z]*\b', '', text)                  
+    text = re.sub(r'\b\d+(\.\d+)*\b', '', text)                       
+    text = re.sub(r'\([A-Z]\)|\b[A-Z]\)', '', text)
+    text = re.sub(r'\bISO\b', '', text, flags=re.I) 
+    text = re.sub(r"\(\s*\)", '', text)
     text = re.sub(r"[•●◦▪]", "", text)
-    text = re.sub(r"\n+", "\n", text)
-    text = re.sub(r"\s{2,}", " ", text)
-    text = re.sub(r"\s*([a-d]\))", r"\n\1", text)
-    text = re.sub(r"(?m)^\s*[\-\*\•\·\●\▪\▶]+\s*", "", text)
-    text = re.sub(r"\.{2,}", ".", text)
-    text = re.sub(r"[\-–]{2,}", "–", text)
-    text = re.sub(r"\s+([,.;:!?])", r"\1", text)
-    text = re.sub(r"([,.;:!?])([^\s])", r"\1 \2", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    text = re.sub(r"(?<=\b[a-zA-Z])\s(?=[a-zA-Z]{2,}\b)", "", text)
-    text = re.sub(r"(^|\.\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
-    
-    text = text.strip()
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'\b([A-Za-z])\s(?=[a-z])', r'\1', text)
+    text = re.sub(r'(?<!\b(be|to|an|in|on|by|at|as|of|or|if|is|it|do|so|no))\b([A-Za-z])\s(?=[a-z])', r'\2', text)
+    text = re.sub(r'([a-z])([A-Z])', r'\1 \2', text)
+    text = re.sub(r'\s*([.,;:!?])\s*', r'\1 ', text)
+    text = re.sub(r'\s{2,}', ' ', text).strip()
+    text = re.sub(r'(^|\.\s+)([a-z])', lambda m: m.group(1) + m.group(2).upper(), text)
 
-    sentences = tokenizer.tokenize(text)
+    sentences = re.split(r'(?<=[.?!])\s+', text)
     bullets = [f"• {s.strip()}" for s in sentences if s.strip()]
 
     return bullets
-
-
 
 
 def split_into_chunks(text, chunk_size=600, overlap=50):
@@ -393,9 +380,7 @@ def split_into_chunks(text, chunk_size=600, overlap=50):
     Memory-safe splitter — processes text in small slices without loading all words in RAM.
     Suitable for 100+ page PDFs.
     """
-    import re
 
- 
     text = re.sub(r'[ \t]+', ' ', text.strip())
 
     sentences = re.split(r'(?<=[.!?])\s+', text)
@@ -478,8 +463,6 @@ def check_session(request):
     return JsonResponse({'logged_in': request.user.is_authenticated})
 
 
-
-
 @login_required(login_url='login')
 @never_cache
 def main_view(request):
@@ -513,7 +496,7 @@ def main_view(request):
                 category=category
             )
 
-            extracted_text = deep_clean_answer(uf.file.path)
+            extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
             extracted_text = "\n".join(sent_tokenize(extracted_text))
             uf.extracted_text = extracted_text
             uf.save()
@@ -531,531 +514,354 @@ def main_view(request):
     return render(request, "main.html", {"uploaded_files": uploaded_files})
 
 
-
 @login_required(login_url='login')
 @never_cache
 def chatbot_view(request):
-    """Render chatbot page and answer questions using FAISS + LLaMA (local)."""
-    User = get_user_model() 
-    last_chat = None
+    """Chatbot powered by FAISS + LLaMA (local) — conceptual + factual accuracy optimized."""
+    User = get_user_model()
     response_text = ""
     debug_info = ""
+    chat_history = []
     reference_items = []
+
+    REDIS_TTL_SECONDS = 60
+    redis_key = f"chat_history:{request.user.id}"
+
     try:
-        expiry_time = timezone.now() - timedelta(minutes=1)
-        db_chat_history = list(ChatbotQA.objects.filter(user=request.user).order_by("-created_at")[:MAX_HISTORY])
+        raw = cache.get(redis_key)
+        chat_history = json.loads(raw) if raw else []
     except Exception:
-        db_chat_history = []
+        chat_history = []
 
     main_user = User.objects.filter(is_main=True).first()
 
-    if request.user.is_main:
-        
-        uploaded_file = UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
-    else:
-        
-        uploaded_file = UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
-
-
-       
-    redis_key = f"chat_history:{request.user.id}"
-    try:
-        raw = cache.get(redis_key)
-        if raw:
-           
-            chat_history = json.loads(raw)
-        else:
-           
-            chat_history = [
-                {"question": c.question, "answer": c.answer, "ts": c.created_at.isoformat() if getattr(c, "created_at", None) else None}
-                for c in db_chat_history
-            ]
-    except Exception:
-        
-        chat_history = [
-            {"question": c.question, "answer": c.answer, "ts": c.created_at.isoformat() if getattr(c, "created_at", None) else None}
-            for c in db_chat_history
-        ]
-
-    last_chat = chat_history[0] if chat_history else None
+    uploaded_file = (
+        UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
+        if request.user.is_main
+        else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
+    )
 
     if request.method == "POST":
+        print("✅ chatbot_view POST triggered")
+        print("Question received:", request.POST.get("question"))
+
         q = request.POST.get("question", "").strip()
+
         if not q:
             response_text = "Please enter a question."
         elif not uploaded_file or not uploaded_file.extracted_text:
-            response_text = "No uploaded file found. Please upload a file first."
+            response_text = "No uploaded file found. Please upload one first."
         else:
             try:
-                index_name = f"main_user_{main_user.id}_file_{uploaded_file.id}.index"
+
+                index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
                 index_path = os.path.join(FAISS_DIR, index_name)
                 meta_path = index_path.replace(".index", "_meta.pkl")
 
+
                 if not os.path.exists(index_path) or not os.path.exists(meta_path):
-                 
-                    cleaned_text = uploaded_file.extracted_text or ""
-                    build_faiss_index_from_text(cleaned_text, index_path)
+                    build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
+
+  
+                conceptual_keywords = ["benefit", "purpose", "role", "importance", "use", "impact", "objective"]
+                if any(word in q.lower() for word in conceptual_keywords):
+                    q += ""
+
 
                 index, chunks, meta = load_faiss_index(index_path)
                 q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
+                D, I = index.search(q_emb, 5)
 
-                top_k = 1
-                D, I = index.search(q_emb, top_k)
-                D = np.array(D[0], dtype=float)
-                I = I[0].tolist()
+                distances, retrieved, retrieved_meta = [], [], []
+                for idx, d in zip(I[0], D[0]):
+                    if idx >= 0 and idx < len(chunks):
+                        retrieved.append(chunks[idx])
+                        retrieved_meta.append(meta[idx])
+                        distances.append(float(d))
 
-                retrieved = []
-                retrieved_meta = []
-                distances = []
-                
-                for idx, d in zip(I, D):
-                    if idx is None or idx < 0 or idx >= len(chunks):
-                        continue
-                    retrieved.append(chunks[idx])
-                    retrieved_meta.append(meta[idx])
-                    distances.append(float(d))
-                
                 if not retrieved:
-                    response_text = "Irrelevant question. No relevant information found in the file."
+                    response_text = "Information not clearly found in the document."
                 else:
-                   
-                    max_d = float(np.max(distances)) if len(distances) > 0 else 1.0
-                    similarities = [1.0 - (d / (max_d + 1e-9)) for d in distances]
+
+                    d_min, d_max = float(np.min(distances)), float(np.max(distances))
+                    similarities = [1 - ((d - d_min) / (d_max - d_min + 1e-9)) for d in distances]
                     avg_sim = float(np.mean(similarities))
-                    sim_threshold = 0.45 if len(chunks) > 500 else 0.55
+                    print(f" DEBUG | Distances: {distances}")
+                    print(f" DEBUG | Avg Similarity: {avg_sim:.4f}")
 
-                    if avg_sim < sim_threshold:
-                        response_text =  "Irrelevant question. No relevant information found in the file."
+                    if avg_sim < 0.15:
+                        response_text = "Information not clearly found in the document."
                     else:
-                        context = "\n".join(retrieved[:3])
-                        prompt = f"""
-You are a precise assistant. Use ONLY the text in the excerpts below.
-Answer in short, clear bullet points (each line = 1 key point).
-Do NOT include numbering, document IDs, ISO codes, sections (like 8.4 or 2.1), or page references.
-If the answer isn’t clearly stated, reply exactly: "Irrelevant question."
+                        context = "\n\n".join(retrieved[:3]).strip()
+                        print("\n DEBUG | Full Context Sent to LLaMA:\n", context[:1200])
+                        print("\n DEBUG | Question:", q)
 
---- Document Excerpts ---
+                     
+                        prompt = f"""
+You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the document context.
+
+**Standard:** ISO 22301:2019 - Business Continuity Management Systems
+
+**Context:**
 {context}
 
---- Question ---
-{q}
+**Question:** {q}
 
---- Short Answer (bullet points) ---
+**Guidelines:**
+✓ Answer based only on provided context
+✓ Use bullet points for clarity
+✓ Include clause numbers (e.g., Clause 8.2)
+✓ Explain requirements clearly
+✓ If not in context: "Not specified in the provided ISO 22301:2019 sections"
+
+**Answer:**
 """
+
                         
                         try:
-                            res = llm(prompt=prompt, max_tokens=600)
-                           
-                            if isinstance(res, dict) and "choices" in res and len(res["choices"])>0:
-                                answer = res["choices"][0].get("text","").strip()
-                            elif isinstance(res, dict) and "content" in res:
-                                answer = res.get("content","").strip()
-                            else:
-                                answer = str(res).strip()
-                                answer = deep_clean_answer(answer)
-                                if not answer or len(answer.split()) < 3:
-                                    answer = "Irrelevant question."
-            
+                            print(" Calling LLaMA...")
+                            print(" Prompt length:", len(prompt))
+                            if len(prompt) > 3500:
+                                prompt = prompt[-3500:]
+
+                            res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
+                            print(" LLaMA responded!")
+
                         except Exception as e:
-                            answer = f" LLaMA error: {e}"
+                            print(f" LLaMA crashed: {e}")
+                            print(" Retrying with shorter prompt...")
+                            try:
+                                short_prompt = prompt[-1500:]
+                                res = llm(prompt=short_prompt, max_tokens=300, temperature=0.3)
+                                print(" Fallback LLaMA call succeeded!")
+                            except Exception as e2:
+                                print(f" LLaMA failed again: {e2}")
+                                res = {"content": "Model failed internally or context too large."}
 
-                        if not re.search(r'[.!?]"?$', answer):
-                            for chunk in retrieved:
-                                tail = " ".join(answer.split()[-10:])
-                                if tail in chunk:
-                                    after_tail = chunk.split(tail, 1)[-1]
-                                    match = re.search(r'[^.?!]*[.?!]', after_tail)
-                                    if match:
-                                        answer += match.group(0).strip()
-                                    break
-                            
-                            answer = answer.replace("\n", " ").replace("\r", " ")
-                            answer = re.sub(r"\s+", " ", answer).strip()
-                                     
-                        if len(answer.split()) > 200:
-                            answer = " ".join(answer.split()[:200])
-                            if not answer.endswith("."):
-                                answer += "..."
-                                
-                        if retrieved_meta:
-                            chunk_meta = retrieved_meta[0]
-                            page_no = chunk_meta.get("page_no", "?")
-                            line_start = chunk_meta.get("line_start", "?")
-                            line_end = chunk_meta.get("line_end", "?")
-                            response_text = f"{answer}\n\n Reference from file: Page {page_no}, lines {line_start}-{line_end}"
+                  
+                        if isinstance(res, dict):
+                            if "choices" in res and len(res["choices"]) > 0:
+                                answer = res["choices"][0].get("text", "").strip()
+                            elif "content" in res:
+                                answer = res["content"].strip()
+                            else:
+                                answer = str(res)
                         else:
-                            response_text = answer
+                            answer = str(res).strip()
 
-                        if not answer:
-                            answer = retrieved[0]
+                        answer = re.sub(r"^.*?--- Short Answer ---", "", answer, flags=re.DOTALL)
+                        answer = re.sub(r"\s+", " ", answer).strip()
+
+                        if not answer or len(answer.split()) < 5:
+                            answer = "Information not clearly found in the document."
+
                         response_text = answer
 
-                if retrieved:
-                    all_bullets = []
-                    for chunk in retrieved:
-                        bullets = deep_clean_answer(chunk)
-                        all_bullets.extend(bullets)                    
-                        response_text = "\n".join(all_bullets) if all_bullets else "Irrelevant question. No relevant information found in the file."
-                else:
-                            response_text = "Irrelevant question. No relevant information found in the file."
-      
-                # if retrieved:
-                #     debug_lines = []
-                #     for i, (chunk, sim) in enumerate(zip(retrieved, similarities), start=1):
-                #         snippet = re.sub(r"\s+", " ", chunk.strip()) 
-                #         match = re.search(r'\.(\s|$)', snippet[150:]) 
-                #         if match:
-                #             end_pos = 150 + match.start() + 1
-                #             snippet = snippet[:end_pos]
-                #         else:
-                #             snippet = snippet[:200]
-                #         debug_lines.append(snippet.strip())
-                #     response_text = "\n".join(debug_lines)
-                    
-                # else:
-                #     response_text = "No chunks retrieved."
-               
-                if response_text and response_text.strip() and response_text.lower() != "irrelevant question.":
+       
+                if response_text and "information not" not in response_text.lower():
                     ChatbotQA.objects.create(
                         user=request.user,
                         uploaded_file=uploaded_file,
                         question=q,
                         answer=response_text.strip()
-                        )
-               
-                
-                try:
-                    raw = cache.get(redis_key)
-                    if raw:
-                        chat_history = json.loads(raw)
-                    else:
-                        chat_history = []
+                    )
 
-                except Exception:
-                    
-                      
-                    chat_history = []
-
-                    last_chat = chat_history[0] if chat_history else None
+              
+                chat_history.append({
+                    "question": q,
+                    "answer": response_text.strip(),
+                    "ts": timezone.now().isoformat()
+                })
+                cache.set(redis_key, json.dumps(chat_history), timeout=REDIS_TTL_SECONDS)
 
             except Exception as exc:
                 response_text = f" Error: {exc}\n{traceback.format_exc()}"
-                debug_info = ""
 
     return render(request, "chatbot.html", {
         "response": response_text,
         "debug": debug_info,
         "chat_history": chat_history,
-        "last_chat": last_chat,
         "uploaded_file": uploaded_file,
-        "reference_items": reference_items
+        "reference_items": reference_items,
     })
 
-# @csrf_exempt
-# def upload_file_api(request):
-#     """
-#     Safe Upload API:
-#     - Works even if user not logged in.
-#     - Automatically assigns main user or first CustomUser as fallback.
-#     - Builds FAISS index for the uploaded file automatically.
-#     """
+
+# @login_required(login_url='login')
+# @never_cache
+# def chatbot_view(request):
+#     """Render chatbot page and answer questions using FAISS + LLaMA (local)."""
 #     User = get_user_model()
 
+#     last_chat = None
+#     response_text = ""
+#     debug_info = ""
+#     chat_history = []
+#     reference_items = []
+
+#     REDIS_TTL_SECONDS = 60
+#     redis_key = f"chat_history:{request.user.id}"
+
+#     # Load chat history from cache
 #     try:
-       
-#         if request.user.is_authenticated and not request.user.is_anonymous:
-#             user = request.user
-#         else:
-            
-#             user = User.objects.filter(is_main=True).first() or User.objects.first()
-#             if not user:
-#                 return JsonResponse({"error": "No default user found. Please create one."}, status=400)
+#         raw = cache.get(redis_key)
+#         chat_history = json.loads(raw) if raw else []
+#     except Exception:
+#         chat_history = []
 
-#         if request.method != "POST":
-#             return JsonResponse({"error": "Only POST method is allowed"}, status=405)
+#     main_user = User.objects.filter(is_main=True).first()
 
-#         uploaded_file = request.FILES.get("file")
-#         category = request.POST.get("category", "General")
+#     # Determine which user's file to use
+#     if request.user.is_main:
+#         uploaded_file = UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
+#     else:
+#         uploaded_file = UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
 
-#         if not uploaded_file:
-#             return JsonResponse({"error": "No file provided"}, status=400)
-
-#         uf = UploadedFile.objects.create(
-#             uploaded_by=user,
-#             file=uploaded_file,
-#             original_name=uploaded_file.name,
-#             category=category
-#         )
-
-       
-#         extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
-#         uf.extracted_text = extracted_text
-#         uf.save()
-
-       
-#         if user.is_main:
-#             owner_id = user.id
-#         else:
-#             main_user = User.objects.filter(is_main=True).first()
-#             owner_id = main_user.id if main_user else user.id
-
-#         index_name = f"user_{owner_id}_file_{uf.id}.index"
-#         index_path = os.path.join(FAISS_DIR, index_name)
-
-#         build_faiss_index_from_text(extracted_text, index_path)
-
-      
-#         return JsonResponse({
-#             "message": " File uploaded successfully",
-#             "file_id": uf.id,
-#             "uploaded_by": user.username,
-#             "category": uf.category
-#         })
-
-#     except Exception as e:
-#         print("Upload API Error:", traceback.format_exc())
-#         return JsonResponse({"error": str(e)}, status=500)
-    
-
-# @csrf_exempt
-# def chat_api(request):
-#     """
-#     Chat API:
-#     - Uses FAISS for semantic search on a specific file
-#     - Automatically picks the right file (if file_id given)
-#     - Returns clean JSON with answer + file reference
-#     """
-#     User = get_user_model()
-
-#     try:
-#         if request.method != "POST":
-#             return JsonResponse({"error": "Only POST requests are allowed."}, status=405)
-
+#     if request.method == "POST":
 #         q = request.POST.get("question", "").strip()
-#         file_id = request.POST.get("file_id")
-
 #         if not q:
-#             return JsonResponse({"error": "Missing 'question' field."}, status=400)
-
-#         # ✅ Choose correct user (same fallback logic as upload)
-#         if request.user.is_authenticated:
-#             user = request.user
+#             response_text = "Please enter a question."
+#         elif not uploaded_file or not uploaded_file.extracted_text:
+#             response_text = "No uploaded file found. Please upload a file first."
 #         else:
-#             user = User.objects.filter(is_main=True).first() or User.objects.first()
-#             if not user:
-#                 return JsonResponse({"error": "No default user found. Please create one."}, status=400)
+#             try:
+#                 # Consistent index naming
+#                 index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
+#                 index_path = os.path.join(FAISS_DIR, index_name)
+#                 meta_path = index_path.replace(".index", "_meta.pkl")
 
-#         # ✅ Determine which file to query
-#         if file_id:
-#             uploaded_file = UploadedFile.objects.filter(id=file_id).first()
-#         else:
-#             uploaded_file = UploadedFile.objects.filter(uploaded_by=user).order_by("-uploaded_at").first()
+#                 # Rebuild index if missing
+#                 if not os.path.exists(index_path) or not os.path.exists(meta_path):
+#                     cleaned_text = uploaded_file.extracted_text or ""
+#                     build_faiss_index_from_text(cleaned_text, index_path)
 
-#         if not uploaded_file:
-#             return JsonResponse({"error": "No uploaded file found."}, status=404)
-#         if not uploaded_file.extracted_text:
-#             return JsonResponse({"error": "File has no extracted text. Try re-uploading."}, status=400)
+#                 # Add conceptual keywords to query
+#                 query = q.lower().strip()
+#                 conceptual_keywords = ["benefit", "purpose", "role", "importance", "use", "impact", "objective"]
+#                 if any(word in q.lower() for word in conceptual_keywords):
+#                         q = q + " (Explain its purpose or benefit as mentioned in the introduction or objective section.)"
 
-#         # ✅ Load or build FAISS index
-#         index_name = f"user_{uploaded_file.uploaded_by.id}_file_{uploaded_file.id}.index"
-#         index_path = os.path.join(FAISS_DIR, index_name)
-#         meta_path = index_path.replace(".index", "_meta.pkl")
 
-#         if not os.path.exists(index_path) or not os.path.exists(meta_path):
-#             build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
+#                 # Load FAISS index
+#                 index, chunks, meta = load_faiss_index(index_path)
+#                 q_emb = embed_model.encode([query], convert_to_numpy=True).astype("float32")
 
-#         index, chunks, meta = load_faiss_index(index_path)
+#                 # Search top-k chunks
+#                 top_k = 3
+#                 D, I = index.search(q_emb, top_k)
+#                 D = np.array(D[0], dtype=float)
+#                 I = I[0].tolist()
 
-#         # ✅ Encode and search
-#         q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
-#         D, I = index.search(q_emb, 3)
+#                 retrieved = []
+#                 retrieved_meta = []
+#                 distances = []
 
-#         I = I[0].tolist()
-#         D = D[0].tolist()
+#                 for idx, d in zip(I, D):
+#                     if idx is None or idx < 0 or idx >= len(chunks):
+#                         continue
+#                     retrieved.append(chunks[idx])
+#                     retrieved_meta.append(meta[idx])
+#                     distances.append(float(d))
 
-#         retrieved, retrieved_meta, distances = [], [], []
-#         for idx, d in zip(I, D):
-#             if idx >= 0 and idx < len(chunks):
-#                 retrieved.append(chunks[idx])
-#                 retrieved_meta.append(meta[idx])
-#                 distances.append(float(d))
+#                 if not retrieved:
+#                     response_text = "Irrelevant question. No relevant information found in the file."
+#                 else:
+#                     # Compute average similarity
+#                     max_d = float(np.max(distances)) if distances else 1.0
+#                     similarities = [1.0 - (d / (max_d + 1e-9)) for d in distances]
+#                     avg_sim = float(np.mean(similarities))
+#                     sim_threshold = 0.35 if len(chunks) > 500 else 0.55
 
-#         if not retrieved:
-#             return JsonResponse({"answer": "Irrelevant question.", "reference": None, "file_id": uploaded_file.id})
+#                     if avg_sim < sim_threshold:
+#                         response_text = "Irrelevant question. No relevant information found in the file."
+#                     else:
+#                         # Prepare context for LLaMA
+#                         context = "\n\n".join(
+#                             [" ".join(x) if isinstance(x, list) else str(x) for x in retrieved[:top_k]]
+#                         )
+#                         prompt = f"""
+# You are a helpful and intelligent assistant. You will answer based ONLY on the given context from a textbook or document.  
 
-#         # ✅ Similarity threshold check
-#         max_d = float(np.max(distances)) if distances else 1.0
-#         similarities = [1.0 - (d / (max_d + 1e-9)) for d in distances]
-#         avg_sim = float(np.mean(similarities))
-#         sim_threshold = 0.45 if len(chunks) > 500 else 0.55
+# Before answering, think about the question type:
+# - If the question asks about "benefit", "importance", "role", "purpose", "impact", "usefulness", or "conceptual meaning",
+#   then give a CONCEPTUAL explanation — talk about purpose, learning outcomes, or significance.
+#   Focus mainly on the Preface, Foreword, or Introduction sections of the document.
+# - If the question asks "who", "when", "where", "what is", "name", "define", etc.,
+#   then give a FACTUAL answer — short and precise, drawn directly from the text.
+# - If the question mentions "age", "class", or "students", tell which age group or education level the document is meant for.
+# - If the exact answer is not found in the document, reply exactly: "Irrelevant question."
 
-#         if avg_sim < sim_threshold:
-#             return JsonResponse({"answer": "Irrelevant question.", "reference": None, "file_id": uploaded_file.id})
-
-#         # ✅ Build prompt for local model
-#         context = "\n".join(retrieved[:3])
-#         prompt = f"""
-# You are a precise assistant. Use ONLY the text below.
-# Answer in short bullet points.
-# If the question isn’t relevant, reply exactly: "Irrelevant question."
-
-# --- Context ---
+# --- Document Excerpts ---
 # {context}
 
 # --- Question ---
-# {q}
+# {query}
 
 # --- Answer ---
 # """
 
-#         try:
-#             res = llm(prompt=prompt, max_tokens=600)
-#             if isinstance(res, dict) and "choices" in res:
-#                 answer = res["choices"][0].get("text", "").strip()
-#             elif isinstance(res, dict) and "content" in res:
-#                 answer = res["content"].strip()
-#             else:
-#                 answer = str(res).strip()
-#         except Exception as e:
-#             answer = f"LLaMA error: {e}"
+#                         # Call LLaMA
+#                         try:
+#                             res = llm(prompt=prompt, max_tokens=600)
+#                             if isinstance(res, dict) and "choices" in res and len(res["choices"]) > 0:
+#                                 answer = res["choices"][0].get("text", "").strip()
+#                             elif isinstance(res, dict) and "content" in res:
+#                                 answer = res.get("content", "").strip()
+#                             else:
+#                                 answer = str(res).strip()
 
-#         answer = deep_clean_answer(answer)
+#                             answer = deep_clean_answer(answer)
 
-#         # ✅ Add file reference (page, lines)
-#         reference = None
-#         if retrieved_meta:
-#             meta_info = retrieved_meta[0]
-#             reference = {
-#                 "page_no": meta_info.get("page_no", "?"),
-#                 "line_start": meta_info.get("line_start", "?"),
-#                 "line_end": meta_info.get("line_end", "?"),
-#             }
+#                             if not answer or len(answer.split()) < 3:
+#                                 answer = "Irrelevant question."
 
-#         # ✅ Save chat history
-#         ChatbotQA.objects.create(
-#             user=user,
-#             uploaded_file=uploaded_file,
-#             question=q,
-#             answer=answer
-#         )
+#                         except Exception as e:
+#                             answer = f"LLaMA error: {e}"
 
-#         return JsonResponse({
-#             "question": q,
-#             "answer": answer,
-#             "file_id": uploaded_file.id,
-#             "file_name": uploaded_file.original_name,
-#             "reference": reference,
-#             "similarity": round(avg_sim, 3)
-#         })
+#                         # Final fallback to chunk if LLaMA fails
+#                         if not answer or len(answer.split()) < 3 or "irrelevant" in answer.lower():
+#                             response_text = deep_clean_answer(retrieved[0])
+#                         else:
+#                             response_text = answer
 
-#     except Exception as e:
-#         import traceback
-#         print("Chat API Error:", traceback.format_exc())
-#         return JsonResponse({"error": str(e)}, status=500)
+#                         # Limit length
+#                         if len(response_text.split()) > 200:
+#                             response_text = " ".join(response_text.split()[:200]) + "..."
+                        
+#                         # Add reference info if available
+#                         if retrieved_meta:
+#                             chunk_meta = retrieved_meta[0]
+#                             page_no = chunk_meta.get("page_no", "?")
+#                             line_start = chunk_meta.get("line_start", "?")
+#                             line_end = chunk_meta.get("line_end", "?")
+#                             response_text += f"\n\nReference from file: Page {page_no}, lines {line_start}-{line_end}"
 
+#                     # Save question-answer in DB
+#                     if response_text.strip() and response_text.lower() != "irrelevant question.":
+#                         ChatbotQA.objects.create(
+#                             user=request.user,
+#                             uploaded_file=uploaded_file,
+#                             question=q,
+#                             answer=response_text.strip()
+#                         )
 
+#                     # Update cache
+#                     chat_history.append({
+#                         "question": q,
+#                         "answer": response_text.strip(),
+#                         "ts": timezone.now().isoformat()
+#                     })
+#                     cache.set(redis_key, json.dumps(chat_history), timeout=REDIS_TTL_SECONDS)
 
+#             except Exception as exc:
+#                 response_text = f"Error: {exc}\n{traceback.format_exc()}"
+#                 debug_info = ""
 
-
-
-# @csrf_exempt
-# def api_chat(request):
-#     if request.method == "POST":
-#         data = json.loads(request.body)
-#         user_message = data.get("message", "").strip()
-
-#         if not user_message:
-#             return JsonResponse({"error": "Message is empty"}, status=400)
-
-#         # --- Step 1: Retrieve FAISS index and documents ---
-#         index_path = os.path.join(INDEX_PATH, "docs.index")
-#         doc_path = os.path.join(INDEX_PATH, "docs.json")
-
-#         if not os.path.exists(index_path) or not os.path.exists(doc_path):
-#             return JsonResponse({"error": "No document index found. Please upload files first."}, status=400)
-
-#         index = faiss.read_index(index_path)
-#         with open(doc_path, "r", encoding="utf-8") as f:
-#             documents = json.load(f)
-
-#         # --- Step 2: Find most relevant context ---
-#         query_vec = embedding_model.encode([user_message])
-#         scores, indices = index.search(np.array(query_vec).astype("float32"), k=3)
-
-#         context_parts = [documents[i] for i in indices[0] if i < len(documents)]
-#         context_text = "\n\n".join(context_parts)
-
-#         # --- Step 3: Combine context + user question ---
-#         prompt = f"""
-# You are a helpful assistant. Use the following context to answer accurately.
-
-# Context:
-# {context_text}
-
-# Question:
-# {user_message}
-
-# Answer:
-# """
-
-#         # --- Step 4: Send request to local Llama API ---
-#         payload = {
-#             "model": "mistral-7b-instruct-v0.2",
-#             "messages": [
-#                 {"role": "system", "content": "You are a helpful and precise assistant."},
-#                 {"role": "user", "content": prompt}
-#             ],
-#             "temperature": 0.7,
-#             "max_tokens": 400,
-#         }
-
-#         try:
-#             response = requests.post(LOCAL_LLM_URL, json=payload)
-#             result = response.json()
-#             bot_reply = result["choices"][0]["message"]["content"].strip()
-#         except Exception as e:
-#             return JsonResponse({"error": f"LLM error: {str(e)}"}, status=500)
-
-#         # --- Step 5: Store chat history ---
-#         ChatbotQA.objects.create(
-#             question=user_message,
-#             answer=bot_reply
-#         )
-
-#         return JsonResponse({"reply": bot_reply})
-
-#     return JsonResponse({"error": "Invalid request method"}, status=405)
-
-
-# @csrf_exempt
-# def api_history(request):
-#     """
-#     Return chat history from the ChatbotQA table.
-#     If the user is logged in, show only their chats.
-#     Otherwise, show all (for testing mode).
-#     """
-#     if request.method == "GET":
-      
-#         if request.user.is_authenticated:
-#             chats = ChatbotQA.objects.filter(user=request.user).order_by("-created_at")
-#         else:
-#             chats = ChatbotQA.objects.all().order_by("-created_at")[:20]  
-
-       
-#         data = [
-#             {
-#                 "id": c.id,
-#                 "user": c.user.username if c.user else "Anonymous",
-#                 "question": c.question,
-#                 "answer": c.answer,
-#                 "created_at": c.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-#             }
-#             for c in chats
-#         ]
-#         return JsonResponse({"history": data}, safe=False)
-#     else:
-#         return JsonResponse({"error": "Only GET method allowed"}, status=405)
-
-
-
+#     return render(request, "chatbot.html", {
+#         "response": response_text,
+#         "debug": debug_info,
+#         "chat_history": chat_history,
+#         "last_chat": last_chat,
+#         "uploaded_file": uploaded_file,
+#         "reference_items": reference_items
+#     })
 

@@ -3,44 +3,245 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>File Upload</title>
+  <title>ChatDOC — File Upload</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  <style>
+    /* ==== GLOBAL STYLE ==== */
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    header {
+      background: linear-gradient(135deg, #2a5298, #1e3c72);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 40px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .profile-info {
+      position: relative;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .profile-details {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 120%;
+      background: white;
+      color: #333;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      padding: 10px 15px;
+      width: 220px;
+    }
+
+    .profile-info:hover .profile-details {
+      display: block;
+    }
+
+    .profile-details p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    a {
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: #a8d0ff;
+    }
+
+    /* ==== CONTAINER ==== */
+    .container {
+      width: 80%;
+      max-width: 900px;
+      margin: 60px auto;
+      background: white;
+      padding: 40px 50px;
+      border-radius: 16px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h2, h3 {
+      color: #1e3c72;
+      margin-bottom: 20px;
+    }
+
+    .upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .upload-form input, .upload-form button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .upload-form input:focus {
+      border-color: #2a5298;
+      outline: none;
+      box-shadow: 0 0 3px rgba(42,82,152,0.4);
+    }
+
+    button {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: none;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(42,82,152,0.3);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 30px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    th {
+      background-color: #f1f4fb;
+      color: #2a5298;
+    }
+
+    tr:nth-child(even) {
+      background-color: #fafbff;
+    }
+
+    .chatbot-link {
+      margin-top: 35px;
+      text-align: center;
+    }
+
+    .chatbot-btn {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      padding: 14px 35px;
+      border-radius: 50px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .chatbot-btn:hover {
+      background: linear-gradient(135deg, #0056b3, #003d80);
+      transform: scale(1.05);
+    }
+
+    /* Floating chatbot button (optional) */
+    .floating-chatbot {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, #2a5298, #1e3c72);
+      color: white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .floating-chatbot:hover {
+      transform: scale(1.1);
+      background: linear-gradient(135deg, #1e3c72, #142850);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      padding: 15px;
+      font-size: 14px;
+      color: #666;
+    }
+
+  </style>
 </head>
+
 <body>
 
-
   <header>
-    <div class="logo">Chatbot</div>
+    <div class="logo"> ChatDOC</div>
     <div class="nav">
-
-      <!-- ✅ Profile info dropdown -->
       <div class="profile-info">
-         {{ request.user.username }}
+        {{ request.user.username }}
         <div class="profile-details">
           <p><strong>Username:</strong> {{ request.user.username }}</p>
           <p><strong>Email:</strong> {{ request.user.email }}</p>
         </div>
       </div>
-
-      <!-- ✅ Logout link -->
       <a href="{% url 'logout' %}">Logout</a>
     </div>
   </header>
 
   <div class="container">
-    <h2>File Upload</h2>
+    <h2> Upload Your File</h2>
 
     {% if messages %}
-  <div class="messages">
-    {% for message in messages %}
-      <div class="alert 
-        {% if message.tags %} alert-{{ message.tags }} {% endif %}">
-        {{ message }}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert {% if message.tags %} alert-{{ message.tags }} {% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
       </div>
-    {% endfor %}
-  </div>
-{% endif %}
-
+    {% endif %}
 
     <form method="POST" enctype="multipart/form-data" class="upload-form">
       {% csrf_token %}
@@ -50,7 +251,7 @@
       <label>Category:</label>
       <input type="text" name="category" placeholder="Enter category" required>
 
-      <button type="submit"> Upload</button>
+      <button type="submit">Upload</button>
     </form>
 
     <hr>
@@ -80,8 +281,16 @@
     {% endif %}
 
     <div class="chatbot-link">
-      <a href="{% url 'chatbot' %}" class="chatbot-btn"> Chatbot</a>
+      <a href="{% url 'chatbot' %}" class="chatbot-btn"> Open Chatbot</a>
     </div>
   </div>
+
+  <!-- Floating chatbot icon
+  <a href="{% url 'chatbot' %}" class="floating-chatbot" title="Chat with your document!"></a> -->
+
+  <footer>
+    © {{ now|date:"Y" }} ChatDOC — Document Powered by  <strong></strong>
+  </footer>
+
 </body>
 </html>

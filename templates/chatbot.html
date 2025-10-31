@@ -3,16 +3,190 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-
-  <title>Chatbot</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatDOC | Smart Chatbot</title>
   <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
   <style>
+    /* ===== GLOBAL STYLES ===== */
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #eef2f7, #f7f9fb);
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      background: linear-gradient(135deg, #2a5298, #1e3c72);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 35px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .profile-info {
+      position: relative;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .profile-details {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 120%;
+      background: white;
+      color: #333;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      padding: 10px 15px;
+      width: 220px;
+    }
+
+    .profile-info:hover .profile-details {
+      display: block;
+    }
+
+    .profile-details p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    a {
+      text-decoration: none;
+      color: white;
+      transition: 0.3s;
+    }
+
+    a:hover {
+      color: #a8d0ff;
+    }
+
+    /* ===== CHAT CONTAINER ===== */
+    .chat-container {
+      flex: 1;
+      width: 85%;
+      max-width: 900px;
+      margin: 40px auto;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 25px 35px;
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(15px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    h2 {
+      text-align: center;
+      color: #1e3c72;
+    }
+
+    /* ===== CHAT FORM ===== */
+    .chat-form {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .chat-form input {
+      flex: 1;
+      padding: 12px 15px;
+      border-radius: 25px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    .chat-form input:focus {
+      border-color: #1e3c72;
+      box-shadow: 0 0 5px rgba(42, 82, 152, 0.3);
+    }
+
+    .chat-form button {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #2a5298, #1e3c72);
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chat-form button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);
+    }
+
+    /* ===== CHAT OUTPUT ===== */
+    .chat-output {
+      margin-top: 25px;
+      background: #fdfdff;
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid #eee;
+      max-height: 400px;
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .user-question, .bot-answer {
+      margin-bottom: 15px;
+      padding: 12px 18px;
+      border-radius: 10px;
+      animation: fadeInUp 0.4s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {opacity: 0; transform: translateY(10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    .user-question {
+      background: #dbe9ff;
+      align-self: flex-end;
+    }
+
+    .bot-answer {
+      background: #edf1f8;
+      border-left: 4px solid #1e3c72;
+    }
+
+    strong {
+      color: #1e3c72;
+    }
+
+    /* ===== REFERENCES ===== */
     .references-box {
       margin-top: 15px;
       padding: 15px;
@@ -35,10 +209,82 @@
       border-radius: 5px;
     }
 
-    .reference-item small {
+    /* ===== CHAT HISTORY ===== */
+    .chat-history {
+      margin-top: 25px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #eee;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      padding: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    /* ===== FLOATING BUTTONS ===== */
+    .floating-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease;
+    }
+
+    .floating-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
       color: #666;
-      display: block;
-      margin-top: 3px;
+    }
+
+    /* ===== DARK MODE (OPTIONAL) ===== */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: linear-gradient(135deg, #0d1b2a, #1b263b);
+        color: #f1f1f1;
+      }
+      .chat-container {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .chat-form input {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+      .chat-form button {
+        background: linear-gradient(135deg, #3a7bd5, #3a6073);
+      }
+      .chat-output, .chat-history {
+        background: rgba(255, 255, 255, 0.1);
+        color: #ddd;
+      }
+      .bot-answer {
+        border-left: 4px solid #3a7bd5;
+      }
     }
   </style>
 </head>
@@ -46,7 +292,7 @@
 <body>
 
   <header>
-    <div class="logo">Chatbot</div>
+    <div class="logo"> ChatDOC</div>
     <div class="nav">
       <div class="profile-info">
         {{ request.user.username }}
@@ -64,52 +310,29 @@
 
     <form method="POST" class="chat-form">
       {% csrf_token %}
-      <input type="text" name="question" placeholder="Type your question..." required>
+      <input type="text" name="question" placeholder="Type your question..." required />
       <button type="submit">Send</button>
     </form>
 
     {% if response %}
     <div class="chat-output">
       {% if last_chat %}
-      <div class="user-question">
-        <strong>You:</strong> {{ last_chat.question }}
-      </div>
+      <div class="user-question"><strong>You:</strong> {{ last_chat.question }}</div>
       {% endif %}
-
-
-      <div class="bot-answer">
-        <strong>Bot:</strong> {{ response|linebreaksbr }}
-      </div>
-
-
-      <!-- 📄 References from File -->
+      <div class="bot-answer"><strong>Bot:</strong> {{ response|linebreaksbr }}</div>
       {% if reference_items %}
       <div class="references-box">
-        <h4> References from File</h4>
+        <h4>References from File</h4>
         {% for ref in reference_items %}
         <div class="reference-item">
-          <strong>{{ forloop.counter }}.</strong>
-          {{ ref.text }}
-          <small>
-            Page: {{ ref.page_no }}
-          </small>
-
+          <strong>{{ forloop.counter }}.</strong> {{ ref.text }}
+          <small>Page: {{ ref.page_no }}</small>
         </div>
         {% endfor %}
       </div>
       {% endif %}
     </div>
     {% endif %}
-
-
-    {% if debug %}
-    <div class="debug-info">
-      <h4>Bot Debug:</h4>
-      <pre>{{ debug }}</pre>
-    </div>
-    {% endif %}
-
-
 
     <h3>Your Chat History</h3>
     <div class="chat-history">
@@ -126,27 +349,19 @@
     </div>
   </div>
 
-  <footer>
-    <p>&copy; 2025 Chatbot App</p>
-  </footer>
+  <button class="floating-btn" title="Start New Chat" onclick="window.location.reload()">＋</button>
+
+  <footer>© {{ now|date:"Y" }} ChatDOC — Built by <strong></strong></footer>
 
   <script>
-    window.addEventListener("pageshow", function (event) {
-      if (event.persisted) {
-        window.location.reload(true);
-      }
-
+    // Ensure session is valid
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) window.location.reload(true);
       fetch("/check-session/")
-        .then(response => response.json())
-        .then(data => {
-          if (!data.logged_in) {
-            window.location.href = "/login/";
-          }
-        })
-        .catch(err => console.error("Session check failed:", err));
+        .then((r) => r.json())
+        .then((d) => { if (!d.logged_in) window.location.href = "/login/"; })
+        .catch(console.error);
     });
   </script>
-
 </body>
-
 </html>
