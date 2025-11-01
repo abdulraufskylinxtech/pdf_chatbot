@@ -5,6 +5,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import authenticate
 from django.utils.decorators import method_decorator
 from django.core.cache import cache
 from django.http import JsonResponse
@@ -542,9 +543,6 @@ def chatbot_view(request):
     )
 
     if request.method == "POST":
-        print("✅ chatbot_view POST triggered")
-        print("Question received:", request.POST.get("question"))
-
         q = request.POST.get("question", "").strip()
 
         if not q:
@@ -684,6 +682,139 @@ You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the docu
         "uploaded_file": uploaded_file,
         "reference_items": reference_items,
     })
+
+@csrf_exempt
+def api_login(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    username = request.POST.get("username")
+    password = request.POST.get("password")
+
+    if not username or not password:
+        return JsonResponse({"error": "Username and password required"}, status=400)
+
+    user = authenticate(request, username=username, password=password)
+
+    if user is None:
+        return JsonResponse({"error": "Invalid credentials"}, status=401)
+
+    auth_login(request, user)
+
+    if getattr(user, "is_main", False):
+        redirect_url = "/api/upload/"
+    else:
+        redirect_url = "/api/chat/"
+
+    return JsonResponse({
+        "message": "Login successful!",
+        "username": user.username,
+        "is_main": getattr(user, "is_main", False),
+        "redirect_to": redirect_url
+    })
+
+
+@login_required
+def api_logout(request):
+    logout(request)
+    return JsonResponse({"status": "success", "message": "Logged out"})
+
+
+@csrf_exempt
+@login_required
+def api_upload_file(request):
+    if request.method == "POST" and request.FILES.get("file"):
+        uploaded_file = request.FILES["file"]
+
+        uf = UploadedFile.objects.create(
+            uploaded_by=request.user,
+            file=uploaded_file,
+            original_name=uploaded_file.name,
+            category=request.POST.get("category", "General"),
+        )
+
+        extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
+        uf.extracted_text = extracted_text
+        uf.save()
+
+        return JsonResponse({
+            "status": "success",
+            "message": "File uploaded and text extracted",
+            "file_id": uf.id,
+            "file_name": uf.original_name
+        })
+    return JsonResponse({"status": "error", "message": "No file uploaded"})
+
+
+@login_required
+def api_build_index(request):
+    file_id = request.GET.get("file_id")
+    try:
+        uf = UploadedFile.objects.get(id=file_id, uploaded_by=request.user)
+        index_name = f"user_{request.user.id}_file_{uf.id}.index"
+        index_path = os.path.join(FAISS_DIR, index_name)
+        build_faiss_index_from_text(uf.extracted_text, index_path)
+        return JsonResponse({"status": "success", "message": "FAISS index built"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)})\
+        
+@csrf_exempt
+@login_required
+def api_chatbot(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Only POST allowed"})
+
+    q = request.POST.get("question", "").strip()
+    if not q:
+        return JsonResponse({"status": "error", "message": "Empty question"})
+
+    main_user = get_user_model().objects.filter(is_main=True).first()
+    uploaded_file = (
+        UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
+        if request.user.is_main
+        else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
+    )
+
+    if not uploaded_file or not uploaded_file.extracted_text:
+        return JsonResponse({"status": "error", "message": "No uploaded file found"})
+
+    try:
+        index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
+        index_path = os.path.join(FAISS_DIR, index_name)
+        meta_path = index_path.replace(".index", "_meta.pkl")
+
+        if not os.path.exists(index_path):
+            build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
+
+        index, chunks, meta = load_faiss_index(index_path)
+        q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
+        D, I = index.search(q_emb, 5)
+
+        retrieved = [chunks[idx] for idx in I[0] if idx >= 0]
+        if not retrieved:
+            return JsonResponse({"status": "ok", "answer": "Information not found"})
+
+        context = "\n\n".join(retrieved[:3]).strip()
+        prompt = f"You are ISO 22301 expert.\nContext:\n{context}\n\nQuestion: {q}\nAnswer:"
+
+        res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
+        answer = res["choices"][0]["text"].strip() if isinstance(res, dict) else str(res).strip()
+
+        ChatbotQA.objects.create(user=request.user, uploaded_file=uploaded_file, question=q, answer=answer)
+        return JsonResponse({"status": "ok", "question": q, "answer": answer})
+
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)})
+
+
+@login_required
+def api_history(request):
+    history = ChatbotQA.objects.filter(user=request.user).order_by('-id')[:20]
+    data = [
+        {"question": h.question, "answer": h.answer, "time": h.created_at.strftime("%Y-%m-%d %H:%M:%S")}
+        for h in history
+    ]
+    return JsonResponse({"status": "ok", "history": data})
 
 
 # @login_required(login_url='login')
