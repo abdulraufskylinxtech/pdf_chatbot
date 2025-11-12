@@ -1,27 +1,8 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login as auth_login, logout
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import authenticate
-from django.utils.decorators import method_decorator
-from django.core.cache import cache
-from django.http import JsonResponse
-from django.contrib import messages
-from datetime import datetime
-from .forms import SignUpForm, LoginForm
-from .models import UploadedFile, ChatbotQA, CustomUser
-from sklearn.feature_extraction.text import TfidfVectorizer
-from datetime import timedelta
-import os, json, csv, fitz, nltk
-from .utils import (
-    extract_file_content,
-    make_sentence_embeddings,
-    find_best_sentence_answer
-)
+import os, json, fitz, nltk
 import pandas as pd
+import requests
+import uuid
+from django.utils import timezone
 import faiss
 import traceback
 import pickle
@@ -30,12 +11,27 @@ import numpy as np
 from PyPDF2 import PdfReader
 from sklearn.metrics.pairwise import cosine_similarity
 import re
-from llama_cpp import Llama 
+import redis
 from sentence_transformers import SentenceTransformer
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize, sent_tokenize,PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktParameters
+from django.shortcuts import render, redirect
+from django.contrib.auth import login as auth_login, logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.cache import never_cache
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
+from django.core.cache import cache
+from django.http import JsonResponse
+from django.contrib import messages
+from llama_cpp import Llama
+from .forms import SignUpForm, LoginForm
+from .models import UploadedFile, ChatbotQA,CustomUser,ApiUser,ApiChatMessage,ApiUploadedFile
+
 
 nltk.data.path.append(r'D:\Python projects\pdf_chatbot\pdf_chat\nltk_data')
 for pkg in ['punkt', 'punkt_tab']:
@@ -48,15 +44,21 @@ nltk.download('stopwords')
 punkt_param = PunktParameters()
 tokenizer = PunktSentenceTokenizer(punkt_param)
 
-
-# embed_model = SentenceTransformer("Adel-Elwan/msmarco-bert-base-dot-v5-fine-tuned-AI")
+model_path = "D:/Python projects/pdf_chatbot/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
 llm = Llama(
-    model_path = "D:/Python projects/pdf_chatbot/models/llama-2-7b-chat.Q4_K_M.gguf",
-    n_ctx=8192,  
-    n_threads=8,
-    n_gpu_layers=0,
+    model_path=model_path,
+    n_ctx=4096,     
+    n_threads=6,    
+    n_batch=256
 )
+
+# llm = Llama(
+#     model_path = "D:/Python projects/pdf_chatbot/models/llama-2-7b-chat.Q4_K_M.gguf",
+#     n_ctx=8192,  
+#     n_threads=8,
+#     n_gpu_layers=0,
+# )
 
 DOC_EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 embed_model = SentenceTransformer(DOC_EMBED_MODEL_NAME)
@@ -66,21 +68,62 @@ print("Embedding dimension:", EMBED_DIM)
 MAX_HISTORY = 50
 REDIS_TTL_SECONDS = 60 
 
+User = get_user_model()
 
 INDEX_PATH = "D:/Python projects/pdf_chatbot/faiss_index"
 os.makedirs(INDEX_PATH, exist_ok=True)
-
-LOCAL_LLM_URL = "http://127.0.0.1:8000/v1/chat/completions"  
-
 
 FAISS_DIR = os.path.join(settings.BASE_DIR, "faiss_indexes")
 os.makedirs(FAISS_DIR, exist_ok=True)
 
 
+
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
+
+def is_session_valid(user_id, session_id):
+    redis_key = f"user_session:{user_id}"
+    active_session = redis_client.get(redis_key)
+    return active_session == session_id
+
+
+def search_google_serpapi(query, num_results=3):
+    """Fetch top Google search results using SerpAPI."""
+    api_key = settings.SERPAPI_KEY
+    if not api_key:
+        return []
+
+    url = "https://serpapi.com/search.json"
+    params = {
+        "engine": "google",
+        "q": query,
+        "num": num_results,
+        "api_key": api_key
+    }
+
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+
+        results = []
+        for item in data.get("organic_results", [])[:num_results]:
+            title = item.get("title")
+            link = item.get("link")
+            snippet = item.get("snippet", "")
+            results.append({
+                "title": title,
+                "link": link,
+                "snippet": snippet
+            })
+        return results
+
+    except Exception as e:
+        print(f"SerpAPI error: {e}")
+        return []
+
+
 def remove_emojis_and_special_chars(text):
     cleaned = re.sub(r'[^\x00-\x7F]+', '', text)
     return cleaned.strip()
-
 
 def extract_text_from_file(file_path):
     text = ""
@@ -608,7 +651,6 @@ You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the docu
 **Guidelines:**
 ✓ Answer based only on provided context
 ✓ Use bullet points for clarity
-✓ Include clause numbers (e.g., Clause 8.2)
 ✓ Explain requirements clearly
 ✓ If not in context: "Not specified in the provided ISO 22301:2019 sections"
 
@@ -683,316 +725,491 @@ You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the docu
         "reference_items": reference_items,
     })
 
+
+
+
+
 @csrf_exempt
 def api_login(request):
     if request.method != "POST":
         return JsonResponse({"error": "Only POST allowed"}, status=405)
 
-    username = request.POST.get("username")
-    password = request.POST.get("password")
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
 
-    if not username or not password:
-        return JsonResponse({"error": "Username and password required"}, status=400)
+    username = data.get("username")
+    email = data.get("email")
 
-    user = authenticate(request, username=username, password=password)
+    if not username or not email:
+        return JsonResponse({"error": "username and email are required"}, status=400)
+    username_exists = ApiUser.objects.filter(username=username).exists()
+    email_exists = ApiUser.objects.filter(email=email).exists()
 
-    if user is None:
-        return JsonResponse({"error": "Invalid credentials"}, status=401)
+    if username_exists and not email_exists:
+        return JsonResponse({"error": "Username already exists, please use a different one."}, status=400)
+    elif email_exists and not username_exists:
+        return JsonResponse({"error": "Email already exists, please use a different one."}, status=400)
+    elif username_exists and email_exists:
+      
+        user = ApiUser.objects.filter(username=username, email=email).first()
 
-    auth_login(request, user)
+   
+    user, created = ApiUser.objects.get_or_create(
+        username=username,
+        email=email,
+        defaults={"is_main": False}  
+    )
 
-    if getattr(user, "is_main", False):
-        redirect_url = "/api/upload/"
-    else:
-        redirect_url = "/api/chat/"
+ 
+    main_session_key = f"user_session:{user.id}"
+    page_access_key = f"user_page_access:{user.id}"
+
+   
+    existing_session = redis_client.get(main_session_key)
+    if existing_session:
+        session_id = existing_session.decode() if isinstance(existing_session, bytes) else existing_session
+        main_ttl = redis_client.ttl(main_session_key)
+        page_access = redis_client.get(page_access_key)
+        page_ttl = redis_client.ttl(page_access_key) if page_access else 0
+
+      
+        if user.is_main or page_access:
+            redirect_url = "/api/upload/"
+        else:
+            redirect_url = "/api/chat/"
+
+        return JsonResponse({
+            "message": "You already have an active session. Please use the existing session_id.",
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "session_id": session_id,
+                "is_main": user.is_main,
+                "session_expiry_seconds": main_ttl,
+                "page_access_expiry_seconds": page_ttl if page_access else 0
+            },
+            "redirect_to": redirect_url
+        }, status=200)
+
+  
+    new_session = uuid.uuid4().hex
+    user.session_id = new_session
+    user.save(update_fields=["session_id"])
+
+    redis_client.setex(main_session_key, 86400, new_session)
+
+   
+    if user.is_main:
+        redis_client.setex(page_access_key, 3600, "upload_access")
+
+    redirect_url = "/api/upload/" if user.is_main else "/api/chat/"
 
     return JsonResponse({
-        "message": "Login successful!",
-        "username": user.username,
-        "is_main": getattr(user, "is_main", False),
+        "message": "User Created Succesfully.",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "session_id": new_session,
+            "is_main": user.is_main,
+            "session_expiry_seconds": 86400,
+            "page_access_expiry_seconds": 3600 if user.is_main else 0,
+            "new_user_created": created
+        },
         "redirect_to": redirect_url
+    }, status=200)
+
+
+
+@csrf_exempt
+def api_upload_file(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
+
+    id = data.get("id")
+    session_id = data.get("session_id")
+    file_url = data.get("file_url")  
+    file_name = data.get("file_name")
+    category = data.get("category", "General")
+
+    if not id or not session_id or not file_url or not file_name:
+        return JsonResponse({
+            "error": "id, session_id, file_url, and file_name are required"
+        }, status=400)
+    
+    redis_key = f"user_session:{id}"
+    stored_session = redis_client.get(redis_key)
+    if not stored_session or stored_session != session_id:
+        return JsonResponse({"error": "Your session has expired. Please log in again."}, status=401)
+
+    try:
+        user = ApiUser.objects.get(id=id, session_id=session_id)
+    except ApiUser.DoesNotExist:
+        return JsonResponse({"error": "Invalid user or session ID"}, status=403)
+
+    if not user.is_main:
+        return JsonResponse({"error": "Permission denied. Only main users can upload files."}, status=403)
+
+ 
+    existing_file = ApiUploadedFile.objects.filter(
+        uploaded_by=user,
+        original_name=file_name
+    ).first()
+
+    if existing_file:
+        # Optional: delete FAISS index if used
+        # delete_faiss_index(existing_file.id, user.id)
+
+        # Delete previous file record
+        existing_file.delete()
+
+    
+    uf = ApiUploadedFile.objects.create(
+        uploaded_by=user,
+        original_name=file_name,
+        category=category,
+    )
+
+   
+    if file_url.startswith("http"):
+        import requests
+        response = requests.get(file_url)
+        if response.status_code != 200:
+            return JsonResponse({"error": "Failed to download file from URL"}, status=400)
+        uf.file.save(file_name, ContentFile(response.content))
+    else:
+        try:
+            with open(file_url, "rb") as f:
+                uf.file.save(file_name, ContentFile(f.read()))
+        except FileNotFoundError:
+            return JsonResponse({"error": f"Local file not found: {file_url}"}, status=400)
+
+  
+    extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
+    uf.extracted_text = extracted_text
+    uf.save()
+
+    return JsonResponse({
+        "status": "success",
+        "message": "File uploaded successfully",
+        "file": {
+            "id": uf.id,
+            "name": uf.original_name,
+            "category": uf.category
+        }
     })
 
 
-@login_required
-def api_logout(request):
-    logout(request)
-    return JsonResponse({"status": "success", "message": "Logged out"})
-
-
-@csrf_exempt
-@login_required
-def api_upload_file(request):
-    if request.method == "POST" and request.FILES.get("file"):
-        uploaded_file = request.FILES["file"]
-
-        uf = UploadedFile.objects.create(
-            uploaded_by=request.user,
-            file=uploaded_file,
-            original_name=uploaded_file.name,
-            category=request.POST.get("category", "General"),
-        )
-
-        extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
-        uf.extracted_text = extracted_text
-        uf.save()
-
-        return JsonResponse({
-            "status": "success",
-            "message": "File uploaded and text extracted",
-            "file_id": uf.id,
-            "file_name": uf.original_name
-        })
-    return JsonResponse({"status": "error", "message": "No file uploaded"})
-
-
-@login_required
-def api_build_index(request):
-    file_id = request.GET.get("file_id")
+def query_ollama(prompt):
+    url = "http://localhost:11434/api/generate"
+    payload = {
+        "model": "gemma3:4b",  
+        "prompt": prompt,
+        "stream": False
+    }
     try:
-        uf = UploadedFile.objects.get(id=file_id, uploaded_by=request.user)
-        index_name = f"user_{request.user.id}_file_{uf.id}.index"
-        index_path = os.path.join(FAISS_DIR, index_name)
-        build_faiss_index_from_text(uf.extracted_text, index_path)
-        return JsonResponse({"status": "success", "message": "FAISS index built"})
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)})\
         
+        response = requests.post(url, json=payload, timeout=200)
+        response.raise_for_status()
+        result = response.json()
+
+        return result.get("response", "").strip()
+
+    except requests.exceptions.ReadTimeout:
+        return "Model took too long to respond (timeout). Try again."
+    except requests.exceptions.ConnectionError:
+        return "Cannot connect to Ollama. Make sure 'ollama serve' is running."
+    except Exception as e:
+        return f"Ollama error: {e}"
+
+
 @csrf_exempt
-@login_required
-def api_chatbot(request):
+def api_chat(request):
     if request.method != "POST":
-        return JsonResponse({"status": "error", "message": "Only POST allowed"})
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
 
-    q = request.POST.get("question", "").strip()
-    if not q:
-        return JsonResponse({"status": "error", "message": "Empty question"})
+    try:
+        data = json.loads(request.body.decode("utf-8"))
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON body"}, status=400)
 
-    main_user = get_user_model().objects.filter(is_main=True).first()
-    uploaded_file = (
-        UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
-        if request.user.is_main
-        else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
-    )
+    user_id = data.get("user_id")
+    session_id = data.get("session_id")
+    question = data.get("question", "").strip()
+
+    if not user_id or not session_id:
+        return JsonResponse({"error": "user_id and session_id required"}, status=400)
+    if not question:
+        return JsonResponse({"error": "question required"}, status=400)
+
+
+    redis_key = f"user_session:{user_id}"
+    stored_session = redis_client.get(redis_key)
+    if not stored_session:
+        return JsonResponse({"error": "Your session has expired. Please log in again."}, status=401)
+
+    if isinstance(stored_session, bytes):
+        stored_session = stored_session.decode()
+
+    if stored_session != session_id:
+        return JsonResponse({"error": "Invalid or expired session. Please login again."}, status=401)
+
+
+    page_access_key = f"user_page_access:{user_id}"
+    has_upload_access = bool(redis_client.get(page_access_key))
+
+    try:
+        api_user = ApiUser.objects.get(id=user_id, session_id=session_id)
+    except ApiUser.DoesNotExist:
+        return JsonResponse({"error": "Invalid user_id or session ID"}, status=403)
+
+    if api_user.is_main or has_upload_access:
+        main_user = api_user
+        uploaded_file = ApiUploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
+    else:
+        main_user = ApiUser.objects.filter(is_main=True).first()
+        if not main_user:
+            return JsonResponse({"error": "No main user found to fetch file."}, status=404)
+        uploaded_file = ApiUploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
 
     if not uploaded_file or not uploaded_file.extracted_text:
-        return JsonResponse({"status": "error", "message": "No uploaded file found"})
+        return JsonResponse({"error": "No uploaded file found. Please ask main user to upload one."}, status=404)
 
     try:
+
         index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
         index_path = os.path.join(FAISS_DIR, index_name)
         meta_path = index_path.replace(".index", "_meta.pkl")
 
-        if not os.path.exists(index_path):
+        if not os.path.exists(index_path) or not os.path.exists(meta_path):
             build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
 
         index, chunks, meta = load_faiss_index(index_path)
-        q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
+        q_emb = embed_model.encode([question], convert_to_numpy=True).astype("float32")
         D, I = index.search(q_emb, 5)
 
-        retrieved = [chunks[idx] for idx in I[0] if idx >= 0]
+        distances, retrieved, retrieved_meta = [], [], []
+        for idx, d in zip(I[0], D[0]):
+            if 0 <= idx < len(chunks):
+                retrieved.append(chunks[idx])
+                retrieved_meta.append(meta[idx])
+                distances.append(float(d))
+
         if not retrieved:
-            return JsonResponse({"status": "ok", "answer": "Information not found"})
+            answer = "Information not clearly found in the document."
+        else:
+            d_min, d_max = float(np.min(distances)), float(np.max(distances))
+            similarities = [1 - ((d - d_min) / (d_max - d_min + 1e-9)) for d in distances]
+            avg_sim = float(np.mean(similarities))
 
-        context = "\n\n".join(retrieved[:3]).strip()
-        prompt = f"You are ISO 22301 expert.\nContext:\n{context}\n\nQuestion: {q}\nAnswer:"
+            if avg_sim < 0.15:
+                answer = "Information not clearly found in the document."
+            else:
+                context = "\n\n".join(retrieved[:3]).strip()
+                prompt = f"""
+You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the document context.
 
-        res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
-        answer = res["choices"][0]["text"].strip() if isinstance(res, dict) else str(res).strip()
+**Standard:** ISO 22301:2019 - Business Continuity Management Systems
 
-        ChatbotQA.objects.create(user=request.user, uploaded_file=uploaded_file, question=q, answer=answer)
-        return JsonResponse({"status": "ok", "question": q, "answer": answer})
+**Context:**
+{context}
 
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)})
+**Question:** {question}
+
+**Guidelines:**
+✓ Answer based only on provided context  
+✓ Use bullet points for clarity  
+✓ Include clause numbers (e.g., Clause 8.2)  
+✓ Explain requirements clearly  
+✓ If not in context: "Not specified in the provided ISO 22301:2019 sections"
+
+**Answer:**
+"""
+
+             
+                answer = query_ollama(prompt)
+
+                answer = re.sub(r"\s+", " ", answer).strip()
+                if not answer or len(answer.split()) < 5:
+                    answer = "Information not clearly found in the document."
+
+        google_results = search_google_serpapi(question)                    
+
+   
+        ApiChatMessage.objects.create(
+            user=api_user,
+            session_id=session_id,
+            question=question,
+            answer=answer
+        )
+
+        return JsonResponse({
+            "status": "success",
+            "question": question,
+            "answer": answer,
+            "references": google_results
+        }, status=200)
+
+    except Exception as exc:
+        return JsonResponse({
+            "status": "error",
+            "message": str(exc),
+            "trace": traceback.format_exc()
+        }, status=500)
 
 
-@login_required
-def api_history(request):
-    history = ChatbotQA.objects.filter(user=request.user).order_by('-id')[:20]
-    data = [
-        {"question": h.question, "answer": h.answer, "time": h.created_at.strftime("%Y-%m-%d %H:%M:%S")}
-        for h in history
+@csrf_exempt
+def api_chat_history(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Only GET allowed"}, status=405)
+
+    user_id = request.GET.get("user_id")
+    session_id = request.GET.get("session_id")
+
+    if not user_id or not session_id:
+        return JsonResponse({"error": "user_id and session_id required"}, status=400)
+
+    try:
+        api_user = ApiUser.objects.get(id=user_id, session_id=session_id)
+    except ApiUser.DoesNotExist:
+        return JsonResponse({"error": "Invalid user_id or session_id"}, status=403)
+
+    chats = ApiChatMessage.objects.filter(
+        user=api_user,
+        session_id=session_id
+    ).order_by("created_at")
+
+   
+    chat_history = [
+        {
+            "question": chat.question,
+            "answer": chat.answer,
+            "references": chat.references or [],
+            "created_at": chat.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        }
+        for chat in chats
     ]
-    return JsonResponse({"status": "ok", "history": data})
+
+    return JsonResponse({
+        "status": "success",
+        "user_id": api_user.id,
+        "session_id": session_id,
+        "total_chats": len(chat_history),
+        "chat_history": chat_history
+    }, status=200)
 
 
-# @login_required(login_url='login')
-# @never_cache
-# def chatbot_view(request):
-#     """Render chatbot page and answer questions using FAISS + LLaMA (local)."""
-#     User = get_user_model()
 
-#     last_chat = None
-#     response_text = ""
-#     debug_info = ""
-#     chat_history = []
-#     reference_items = []
 
-#     REDIS_TTL_SECONDS = 60
-#     redis_key = f"chat_history:{request.user.id}"
 
-#     # Load chat history from cache
+# SD_MODEL_PATH = "runwayml/stable-diffusion-v1-5"
+# pipe = StableDiffusionPipeline.from_pretrained(SD_MODEL_PATH, torch_dtype=torch.float32)
+# pipe = pipe.to("cpu")  # force CPU
+
+# TEMP_IMG_DIR = os.path.join("media", "temp_images")
+# os.makedirs(TEMP_IMG_DIR, exist_ok=True)
+
+
+# @csrf_exempt
+# def api_chatbot(request):
+#     if request.method != "POST":
+#         return JsonResponse({"status": "error", "message": "Only POST allowed"}, status=405)
+
 #     try:
-#         raw = cache.get(redis_key)
-#         chat_history = json.loads(raw) if raw else []
+#         data = json.loads(request.body.decode("utf-8"))
+#     except json.JSONDecodeError:
+#         return JsonResponse({"status": "error", "message": "Invalid JSON format"}, status=400)
+
+#     session_id = data.get("session_id")
+#     username = data.get("username")
+#     question = data.get("question", "").strip()
+#     generate_image = data.get("generate_image", False)
+
+#     if not session_id or not username:
+#         return JsonResponse({"status": "error", "message": "session_id and username required"}, status=400)
+#     if not question:
+#         return JsonResponse({"status": "error", "message": "Empty question"}, status=400)
+
+#     # Verify session
+#     try:
+#         session = Session.objects.get(session_key=session_id)
+#         user_id = session.get_decoded().get("_auth_user_id")
+#         user = get_user_model().objects.get(id=user_id)
 #     except Exception:
-#         chat_history = []
+#         return JsonResponse({"status": "error", "message": "Invalid or expired session"}, status=401)
 
-#     main_user = User.objects.filter(is_main=True).first()
+#     response_data = {
+#         "status": "ok",
+#         "username": user.username,
+#         "session_id": session.session_key,
+#         "question": question,
+#         "file_name": None,
+#         "answer": None,
+#         "image_url": None,
+#     }
 
-#     # Determine which user's file to use
-#     if request.user.is_main:
-#         uploaded_file = UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
-#     else:
-#         uploaded_file = UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
+#     try:
+#         # IMAGE FLOW
+#         if generate_image:
+#             prompt = question
+#             image = pipe(prompt, height=512, width=512).images[0]
+#             img_filename = f"{uuid.uuid4().hex}.png"
+#             img_path = os.path.join(TEMP_IMG_DIR, img_filename)
+#             image.save(img_path)
+#             response_data["image_url"] = f"/media/temp_images/{img_filename}"
+#             response_data["answer"] = f"Image generated for prompt: {question}"
 
-#     if request.method == "POST":
-#         q = request.POST.get("question", "").strip()
-#         if not q:
-#             response_text = "Please enter a question."
-#         elif not uploaded_file or not uploaded_file.extracted_text:
-#             response_text = "No uploaded file found. Please upload a file first."
+#         # TEXT QA FLOW
 #         else:
-#             try:
-#                 # Consistent index naming
+#             main_user = get_user_model().objects.filter(is_main=True).first()
+#             uploaded_file = (
+#                 UploadedFile.objects.filter(uploaded_by=user).order_by("-uploaded_at").first()
+#                 if getattr(user, "is_main", False)
+#                 else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
+#             )
+
+#             if uploaded_file and uploaded_file.extracted_text:
+#                 response_data["file_name"] = uploaded_file.original_name
+
+               
 #                 index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
 #                 index_path = os.path.join(FAISS_DIR, index_name)
-#                 meta_path = index_path.replace(".index", "_meta.pkl")
-
-#                 # Rebuild index if missing
-#                 if not os.path.exists(index_path) or not os.path.exists(meta_path):
-#                     cleaned_text = uploaded_file.extracted_text or ""
-#                     build_faiss_index_from_text(cleaned_text, index_path)
-
-#                 # Add conceptual keywords to query
-#                 query = q.lower().strip()
-#                 conceptual_keywords = ["benefit", "purpose", "role", "importance", "use", "impact", "objective"]
-#                 if any(word in q.lower() for word in conceptual_keywords):
-#                         q = q + " (Explain its purpose or benefit as mentioned in the introduction or objective section.)"
-
-
-#                 # Load FAISS index
+#                 if not os.path.exists(index_path):
+#                     build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
 #                 index, chunks, meta = load_faiss_index(index_path)
-#                 q_emb = embed_model.encode([query], convert_to_numpy=True).astype("float32")
+#                 q_emb = embed_model.encode([question], convert_to_numpy=True).astype("float32")
+#                 D, I = index.search(q_emb, 5)
+#                 retrieved = [chunks[idx] for idx in I[0] if idx >= 0]
+#                 context = "\n\n".join(retrieved[:3]).strip()
+#                 prompt = f"You are ISO 22301 expert.\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
+#                 res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
+#                 answer = res["choices"][0]["text"].strip() if isinstance(res, dict) else str(res).strip()
 
-#                 # Search top-k chunks
-#                 top_k = 3
-#                 D, I = index.search(q_emb, top_k)
-#                 D = np.array(D[0], dtype=float)
-#                 I = I[0].tolist()
+#                 # For now, simulated answer
+#                 answer = "Simulated answer based on uploaded file content."
+#                 response_data["answer"] = answer
+#             else:
+#                 response_data["answer"] = "No uploaded file found."
 
-#                 retrieved = []
-#                 retrieved_meta = []
-#                 distances = []
+#         # Save chat
+#         ChatbotQA.objects.create(
+#             user=user,
+#             uploaded_file=uploaded_file if not generate_image else None,
+#             question=question,
+#             answer=response_data["answer"]
+#         )
 
-#                 for idx, d in zip(I, D):
-#                     if idx is None or idx < 0 or idx >= len(chunks):
-#                         continue
-#                     retrieved.append(chunks[idx])
-#                     retrieved_meta.append(meta[idx])
-#                     distances.append(float(d))
+#         return JsonResponse(response_data)
 
-#                 if not retrieved:
-#                     response_text = "Irrelevant question. No relevant information found in the file."
-#                 else:
-#                     # Compute average similarity
-#                     max_d = float(np.max(distances)) if distances else 1.0
-#                     similarities = [1.0 - (d / (max_d + 1e-9)) for d in distances]
-#                     avg_sim = float(np.mean(similarities))
-#                     sim_threshold = 0.35 if len(chunks) > 500 else 0.55
+#     except Exception as e:
+#         return JsonResponse({"status": "error", "message": str(e)}, status=500)
 
-#                     if avg_sim < sim_threshold:
-#                         response_text = "Irrelevant question. No relevant information found in the file."
-#                     else:
-#                         # Prepare context for LLaMA
-#                         context = "\n\n".join(
-#                             [" ".join(x) if isinstance(x, list) else str(x) for x in retrieved[:top_k]]
-#                         )
-#                         prompt = f"""
-# You are a helpful and intelligent assistant. You will answer based ONLY on the given context from a textbook or document.  
-
-# Before answering, think about the question type:
-# - If the question asks about "benefit", "importance", "role", "purpose", "impact", "usefulness", or "conceptual meaning",
-#   then give a CONCEPTUAL explanation — talk about purpose, learning outcomes, or significance.
-#   Focus mainly on the Preface, Foreword, or Introduction sections of the document.
-# - If the question asks "who", "when", "where", "what is", "name", "define", etc.,
-#   then give a FACTUAL answer — short and precise, drawn directly from the text.
-# - If the question mentions "age", "class", or "students", tell which age group or education level the document is meant for.
-# - If the exact answer is not found in the document, reply exactly: "Irrelevant question."
-
-# --- Document Excerpts ---
-# {context}
-
-# --- Question ---
-# {query}
-
-# --- Answer ---
-# """
-
-#                         # Call LLaMA
-#                         try:
-#                             res = llm(prompt=prompt, max_tokens=600)
-#                             if isinstance(res, dict) and "choices" in res and len(res["choices"]) > 0:
-#                                 answer = res["choices"][0].get("text", "").strip()
-#                             elif isinstance(res, dict) and "content" in res:
-#                                 answer = res.get("content", "").strip()
-#                             else:
-#                                 answer = str(res).strip()
-
-#                             answer = deep_clean_answer(answer)
-
-#                             if not answer or len(answer.split()) < 3:
-#                                 answer = "Irrelevant question."
-
-#                         except Exception as e:
-#                             answer = f"LLaMA error: {e}"
-
-#                         # Final fallback to chunk if LLaMA fails
-#                         if not answer or len(answer.split()) < 3 or "irrelevant" in answer.lower():
-#                             response_text = deep_clean_answer(retrieved[0])
-#                         else:
-#                             response_text = answer
-
-#                         # Limit length
-#                         if len(response_text.split()) > 200:
-#                             response_text = " ".join(response_text.split()[:200]) + "..."
-                        
-#                         # Add reference info if available
-#                         if retrieved_meta:
-#                             chunk_meta = retrieved_meta[0]
-#                             page_no = chunk_meta.get("page_no", "?")
-#                             line_start = chunk_meta.get("line_start", "?")
-#                             line_end = chunk_meta.get("line_end", "?")
-#                             response_text += f"\n\nReference from file: Page {page_no}, lines {line_start}-{line_end}"
-
-#                     # Save question-answer in DB
-#                     if response_text.strip() and response_text.lower() != "irrelevant question.":
-#                         ChatbotQA.objects.create(
-#                             user=request.user,
-#                             uploaded_file=uploaded_file,
-#                             question=q,
-#                             answer=response_text.strip()
-#                         )
-
-#                     # Update cache
-#                     chat_history.append({
-#                         "question": q,
-#                         "answer": response_text.strip(),
-#                         "ts": timezone.now().isoformat()
-#                     })
-#                     cache.set(redis_key, json.dumps(chat_history), timeout=REDIS_TTL_SECONDS)
-
-#             except Exception as exc:
-#                 response_text = f"Error: {exc}\n{traceback.format_exc()}"
-#                 debug_info = ""
-
-#     return render(request, "chatbot.html", {
-#         "response": response_text,
-#         "debug": debug_info,
-#         "chat_history": chat_history,
-#         "last_chat": last_chat,
-#         "uploaded_file": uploaded_file,
-#         "reference_items": reference_items
-#     })
 

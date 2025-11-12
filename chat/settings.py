@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+
+load_dotenv()
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'members',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'members.middleware.LoginRequiredMiddleware',
     'members.middleware.NoCacheForLoggedOutUsersMiddleware',
+
 ]
 
 
@@ -114,7 +121,7 @@ DATABASES = {
         'PORT': '3306',
          'OPTIONS': {
             'charset': 'utf8mb4',
-            'init_command': "SET NAMES 'utf8mb4' COLLATE 'utf8mb4_unicode_ci'",
+            'use_unicode': True,
         },
     }
 }
@@ -168,22 +175,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
-AUTH_USER_MODEL = 'members.CustomUser' 
+AUTH_USER_MODEL = 'members.CustomUser'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
 
-# ✅ Session Handling
+#  Session Handling
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_AGE = 3600
 SESSION_SAVE_EVERY_REQUEST = True
 
-# ✅ No caching anywhere
+#  No caching anywhere
 CACHE_MIDDLEWARE_SECONDS = 0
 CACHE_MIDDLEWARE_KEY_PREFIX = ''
 
-# ✅ Redirect setup
+#  Redirect setup
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/chatbot/'
 LOGOUT_REDIRECT_URL = '/login/'
