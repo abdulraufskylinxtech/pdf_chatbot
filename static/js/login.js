@@ -84,7 +84,7 @@ function showSuccess(message) {
     setTimeout(() => {
         successMsg.style.opacity = '0';
         successMsg.style.display = 'none';
-    }, 1000); // Hide after 2.5 seconds
+    }, 1000); 
 }
 
 // Form submit handler
@@ -93,11 +93,11 @@ loginForm.addEventListener('submit', (e) => {
     const validPassword = validatePassword();
 
     if (!(validUsername && validPassword)) {
-        e.preventDefault(); // stop form if invalid
+        e.preventDefault(); 
         return;
     }
 
-    //  If all validations pass
+  
     showSuccess("");
 });
 

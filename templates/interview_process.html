@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="interview-container">
+    <h2>Interview: {{ session.metadata.candidate_name }}</h2>
+
+    {% if question %}
+    <form id="answer-form" action="{% url 'interview_submit_answer' %}" method="post">
+        {% csrf_token %}
+        
+        <div class="question-block">
+            <h3>Q{{ question.order }}. {{ question.text }}</h3>
+            <input type="hidden" name="question_id" value="{{ question.id }}">
+            <textarea 
+    id="answer-text" 
+    name="final_answer" 
+    rows="5" 
+    placeholder="Your answer...">
+</textarea>
+        </div>
+
+        <button type="submit">Submit Answer</button>
+    </form>
+<p>Time remaining: <span id="timer">60</span> seconds</p>
+    {% else %}
+    <div class="completed-message">
+        <h3>All questions completed!</h3>
+        <a href="{% url 'interview_finish' %}" class="finish-btn">Finish Interview</a>
+    </div>
+    {% endif %}
+</div>
+
+
+<style>
+.interview-container {
+    max-width: 700px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.question-block h3 {
+    color: #555;
+    margin-bottom: 15px;
+}
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    resize: vertical;
+    margin-bottom: 15px;
+}
+
+button {
+    background: #00a8ff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    background: #0077cc;
+}
+
+.completed-message {
+    text-align: center;
+    color: green;
+}
+
+.finish-btn {
+    display: inline-block;
+    margin-top: 15px;
+    background: #00a8ff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: 0.2s ease;
+}
+
+.finish-btn:hover {
+    background: #0077cc;
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    let timeLeft = 40;
+    const timerEl = document.getElementById("timer");
+    const textarea = document.getElementById("answer-text");
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+
+        if (timeLeft <= 5) {
+            timerEl.style.color = "red";
+        }
+
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+
+    
+            textarea.readOnly = true;
+
+            
+            textarea.closest("form").requestSubmit();
+        }
+    }, 1000);
+});
+</script>
+
+
+<!-- <script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    let timeLeft = 40;
+    const timerEl = document.getElementById("timer");
+    const form = document.getElementById("answer-form");
+    const textarea = document.getElementById("answer-text");
+    const finalAnswer = document.getElementById("final-answer");
+
+    const countdown = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(countdown);
+
+            //  Lock answer at time end
+            finalAnswer.value = textarea.value;
+
+            //  Disable textarea so no changes possible
+            textarea.disabled = true;
+
+            //  Auto-submit exactly what was typed till time end
+            form.submit();
+        }
+        if (timeLeft <= 5) {
+    timerEl.style.color = "red";
+}
+
+    }, 1000);
+
+});
+</script> -->
+{% endblock %}

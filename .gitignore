@@ -6,7 +6,7 @@ __pycache__/
 .env
  
 # Ignore virtual env
-pdf_chat/
+pdf_chatt/
 
 # Ignore PDF files
 layoutreader/
@@ -18,3 +18,5 @@ pdf_extract_kit/
  
 
 models/
+faiss_indexes/
+media/

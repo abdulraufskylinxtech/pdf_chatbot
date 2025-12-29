@@ -23,7 +23,7 @@ header .logo {
 header .nav {
   display: flex;
   align-items: center;
-  gap: 20px; /* ✅ Creates spacing between profile & logout */
+  gap: 20px;
 }
 
 header .nav a {
@@ -156,8 +156,8 @@ header .nav a:hover {
 .bot-answer .top-chunks {
   margin-top: 10px;
   padding: 12px 15px;
-  background: #fff4e5; /* light yellow background */
-  border-left: 4px solid #ffa500; /* orange accent */
+  background: #fff4e5; 
+  border-left: 4px solid #ffa500; 
   border-radius: 12px;
   font-size: 14px;
   line-height: 1.4;

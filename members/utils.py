@@ -10,19 +10,19 @@ from sentence_transformers import SentenceTransformer
 from django.conf import settings
 from PyPDF2 import PdfReader
 
-model_path = "D:/Python projects/pdf_chatbot/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+# model_path = "D:/Python projects/pdf_chatbot/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
-llm = Llama(
-    model_path=model_path,
-    n_ctx=4096,     
-    n_threads=6,    
-    n_batch=256
-)
+# llm = Llama(
+#     model_path=model_path,
+#     n_ctx=4096,     
+#     n_threads=6,    
+#     n_batch=256
+# )
 
-DOC_EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-embed_model = SentenceTransformer(DOC_EMBED_MODEL_NAME)
-EMBED_DIM = embed_model.get_sentence_embedding_dimension()
-print("Embedding dimension:", EMBED_DIM)
+# DOC_EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+# embed_model = SentenceTransformer(DOC_EMBED_MODEL_NAME)
+# EMBED_DIM = embed_model.get_sentence_embedding_dimension()
+# print("Embedding dimension:", EMBED_DIM)
 
 FAISS_DIR = os.path.join(settings.BASE_DIR, "faiss_indexes")
 os.makedirs(FAISS_DIR, exist_ok=True)
@@ -117,74 +117,74 @@ def clean_extracted_text_preserve_lines(text: str) -> str:
     return clean_text
 
 
-def build_faiss_index_from_text(text, index_path, chunk_size=800, overlap=100):
-    """
-    Builds FAISS index + metadata with page and line references.
-    Each chunk will include page_no, line_start, line_end info.
-    """
+# def build_faiss_index_from_text(text, index_path, chunk_size=800, overlap=100):
+#     """
+#     Builds FAISS index + metadata with page and line references.
+#     Each chunk will include page_no, line_start, line_end info.
+#     """
     
-    meta = []
+#     meta = []
 
-    pages = text.split("--- PAGE BREAK ---")
-    chunks = []
-    page_no = 1
-    line_counter = 0
+#     pages = text.split("--- PAGE BREAK ---")
+#     chunks = []
+#     page_no = 1
+#     line_counter = 0
 
-    for page_text in pages:
-        lines = page_text.strip().splitlines()
-        cleaned_lines = [ln.strip() for ln in lines if ln.strip()]
-        if not cleaned_lines:
-            page_no += 1
-            continue
+#     for page_text in pages:
+#         lines = page_text.strip().splitlines()
+#         cleaned_lines = [ln.strip() for ln in lines if ln.strip()]
+#         if not cleaned_lines:
+#             page_no += 1
+#             continue
 
-        text_on_page = " ".join(cleaned_lines)
-        sentences = re.split(r'(?<=[.!?]) +', text_on_page)
+#         text_on_page = " ".join(cleaned_lines)
+#         sentences = re.split(r'(?<=[.!?]) +', text_on_page)
 
-        current_chunk = ""
-        start_line = 0
+#         current_chunk = ""
+#         start_line = 0
 
-        for i, sentence in enumerate(sentences):
-            if len(current_chunk) + len(sentence) < chunk_size:
-                if not current_chunk:
-                    start_line = line_counter
-                current_chunk += sentence + " "
-            else:
-                chunks.append(current_chunk.strip())
-                meta.append({
-                    "page_no": page_no,
-                    "line_start": start_line,
-                    "line_end": line_counter,
-                })
-                current_chunk = sentence + " "
-                start_line = line_counter
-            line_counter += 1
+#         for i, sentence in enumerate(sentences):
+#             if len(current_chunk) + len(sentence) < chunk_size:
+#                 if not current_chunk:
+#                     start_line = line_counter
+#                 current_chunk += sentence + " "
+#             else:
+#                 chunks.append(current_chunk.strip())
+#                 meta.append({
+#                     "page_no": page_no,
+#                     "line_start": start_line,
+#                     "line_end": line_counter,
+#                 })
+#                 current_chunk = sentence + " "
+#                 start_line = line_counter
+#             line_counter += 1
 
-        if current_chunk:
-            chunks.append(current_chunk.strip())
-            meta.append({
-                "page_no": page_no,
-                "line_start": start_line,
-                "line_end": line_counter,
-            })
+#         if current_chunk:
+#             chunks.append(current_chunk.strip())
+#             meta.append({
+#                 "page_no": page_no,
+#                 "line_start": start_line,
+#                 "line_end": line_counter,
+#             })
 
-        page_no += 1
+#         page_no += 1
 
    
-    if not chunks:
-        raise ValueError("No chunks generated for indexing.")
+#     if not chunks:
+#         raise ValueError("No chunks generated for indexing.")
 
-    embeddings = embed_model.encode(chunks, convert_to_numpy=True)
-    dim = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dim)
-    index.add(np.array(embeddings, dtype="float32"))
-    faiss.write_index(index, index_path)
+#     embeddings = embed_model.encode(chunks, convert_to_numpy=True)
+#     dim = embeddings.shape[1]
+#     index = faiss.IndexFlatL2(dim)
+#     index.add(np.array(embeddings, dtype="float32"))
+#     faiss.write_index(index, index_path)
  
-    meta_path = index_path.replace(".index", "_meta.pkl")
-    with open(meta_path, "wb") as f:
-        pickle.dump({"chunks": chunks, "meta": meta}, f)
+#     meta_path = index_path.replace(".index", "_meta.pkl")
+#     with open(meta_path, "wb") as f:
+#         pickle.dump({"chunks": chunks, "meta": meta}, f)
 
-    print(f" Built FAISS index with {len(chunks)} chunks and metadata: {index_path}")
-    return index_path
+#     print(f" Built FAISS index with {len(chunks)} chunks and metadata: {index_path}")
+#     return index_path
 
 
 def load_faiss_index(index_path):

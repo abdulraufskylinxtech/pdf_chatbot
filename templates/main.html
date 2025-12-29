@@ -6,7 +6,6 @@
   <title>ChatDOC — File Upload</title>
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
   <style>
-    /* ==== GLOBAL STYLE ==== */
     body {
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -78,7 +77,7 @@
       color: #a8d0ff;
     }
 
-    /* ==== CONTAINER ==== */
+    
     .container {
       width: 80%;
       max-width: 900px;
@@ -179,7 +178,7 @@
       transform: scale(1.05);
     }
 
-    /* Floating chatbot button (optional) */
+
     .floating-chatbot {
       position: fixed;
       bottom: 30px;
@@ -281,15 +280,15 @@
     {% endif %}
 
     <div class="chatbot-link">
-      <a href="{% url 'chatbot' %}" class="chatbot-btn"> Open Chatbot</a>
+      <a href="{% url 'chatbot' %}" class="chatbot-btn">Chatbot</a>
     </div>
   </div>
 
-  <!-- Floating chatbot icon
-  <a href="{% url 'chatbot' %}" class="floating-chatbot" title="Chat with your document!"></a> -->
+  <!-- Floating chatbot icon -->
+  <a href="{% url 'chatbot' %}" class="floating-chatbot" title="Chat with your document!">bot</a>
 
   <footer>
-    © {{ now|date:"Y" }} ChatDOC — Document Powered by  <strong></strong>
+    © {{ now|date:"Y" }} ChatDOC — Powered by  <strong></strong>
   </footer>
 
 </body>

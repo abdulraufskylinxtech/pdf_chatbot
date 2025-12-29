@@ -1,4 +1,5 @@
 from django.urls import path
+from uuid import UUID
 from . import views
 from .views import api_chat_history
 urlpatterns = [
@@ -8,9 +9,28 @@ urlpatterns = [
     path('logout/', views.logout_view, name="logout"),
     path("main/", views.main_view, name="main"),
     path('chatbot/', views.chatbot_view, name="chatbot"),
+    path('admin/dashboard/', views.admin_dashboard, name='admin'),
+    path('admin/create-user/', views.admin_create_user, name='admin_create_user'),
+    path('admin/update-user/<int:user_id>/', views.admin_update_user, name='admin_update_user'),
+    path('admin/delete-user/<int:user_id>/', views.admin_delete_user, name='admin_delete_user'),
+    path('admin/create-file/', views.admin_create_file, name='admin_create_file'),
+    path('admin/update-file/', views.admin_update_file, name='admin_update_file'),
+    path('admin/delete-file/<int:file_id>/', views.admin_delete_file, name='admin_delete_file'),
+    path('admin/create-chat/', views.admin_create_chat, name='admin_create_chat'),
+    path('admin/update-chat/<int:chat_id>/', views.admin_update_chat, name='admin_update_chat'),
+    path('admin/delete-chat/<int:chat_id>/', views.admin_delete_chat, name='admin_delete_chat'),
+    path('admin/delete-chunk/<int:chunk_id>/', views.admin_delete_chunk, name='admin_delete_chunk'),
+    path('admin/edit-chunk/<int:chunk_id>/', views.admin_edit_chunk, name='admin_edit_chunk'),
     path('check-session/', views.check_session, name="check_session"),
     path('api/login/', views.api_login, name='api_login'),
     path('api/upload/', views.api_upload_file, name='api_upload_file'),
     path('api/chat/', views.api_chat, name='api_chat'),
     path("api/chat_history/", api_chat_history, name="api_chat_history"),
+    path("interview/", views.interview_home, name="interview_home"),
+    path("interview/start/", views.interview_start, name="interview_start"),   
+    path("interview/process/", views.interview_process, name="interview_process"),
+    path("interview/next/", views.interview_next_question, name="interview_next_question"),
+    path("interview/submit/", views.interview_submit_answer, name="interview_submit_answer"),
+    path("interview/finish/", views.interview_finish, name="interview_finish"),
+    path("interview/report/", views.interview_report, name="interview_report"),     
 ]

@@ -1,6 +1,8 @@
 import os, json, fitz, nltk
 import pandas as pd
 import requests
+import PyPDF2
+import docx
 import uuid
 from django.utils import timezone
 import faiss
@@ -9,28 +11,25 @@ import pickle
 from django.conf import settings
 import numpy as np
 from PyPDF2 import PdfReader
-from sklearn.metrics.pairwise import cosine_similarity
 import re
 import redis
 from sentence_transformers import SentenceTransformer
 import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize, sent_tokenize,PunktSentenceTokenizer
+from nltk.tokenize import sent_tokenize,PunktSentenceTokenizer
 from nltk.tokenize.punkt import PunktParameters
-from django.shortcuts import render, redirect
-from django.contrib.auth import login as auth_login, logout
+from django.shortcuts import render, redirect,get_object_or_404
+from django.contrib.auth import login as auth_login, logout,get_user_model
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
-from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
 from django.core.cache import cache
-from django.http import JsonResponse
+from django.http import JsonResponse,HttpResponseBadRequest
 from django.contrib import messages
 from llama_cpp import Llama
 from .forms import SignUpForm, LoginForm
-from .models import UploadedFile, ChatbotQA,CustomUser,ApiUser,ApiChatMessage,ApiUploadedFile
+from .models import UploadedFile, ChatbotQA,FileChunk,ApiUser,ApiChatMessage,ApiUploadedFile,InterviewSession,InterviewQuestion,InterviewResponse
 
 
 nltk.data.path.append(r'D:\Python projects\pdf_chatbot\pdf_chat\nltk_data')
@@ -44,14 +43,22 @@ nltk.download('stopwords')
 punkt_param = PunktParameters()
 tokenizer = PunktSentenceTokenizer(punkt_param)
 
-model_path = "D:/Python projects/pdf_chatbot/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
-
-llm = Llama(
-    model_path=model_path,
-    n_ctx=4096,     
-    n_threads=6,    
-    n_batch=256
+LLM_MODEL = Llama(
+    model_path="D:/Python projects/pdf_chatbot/models/phi-3-mini-4k-instruct.Q4_K_M.gguf",
+    n_ctx=1024,
+    n_batch=64,
+    n_threads=8,
+    verbose=False
 )
+
+# model_path = "D:/Python projects/pdf_chatbot/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+
+# llm = Llama(
+#     model_path=model_path,
+#     n_ctx=2048,     
+#     n_threads=6,    
+#     n_batch=128
+# )
 
 # llm = Llama(
 #     model_path = "D:/Python projects/pdf_chatbot/models/llama-2-7b-chat.Q4_K_M.gguf",
@@ -77,7 +84,6 @@ FAISS_DIR = os.path.join(settings.BASE_DIR, "faiss_indexes")
 os.makedirs(FAISS_DIR, exist_ok=True)
 
 
-
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 
 def is_session_valid(user_id, session_id):
@@ -85,6 +91,37 @@ def is_session_valid(user_id, session_id):
     active_session = redis_client.get(redis_key)
     return active_session == session_id
 
+
+
+def extract_cv_text(file):
+    if file.name.endswith(".pdf"):
+        reader = PyPDF2.PdfReader(file)
+        return "\n".join(page.extract_text() for page in reader.pages)
+
+    elif file.name.endswith(".docx"):
+        doc = docx.Document(file)
+        return "\n".join(p.text for p in doc.paragraphs)
+
+    return ""
+
+def extract_candidate_name(cv_text):
+    lines = [l.strip() for l in cv_text.splitlines() if l.strip()]
+
+    for line in lines[:5]:  # top of CV
+        if (
+            len(line.split()) in range(2, 5) and
+            line.isupper() and
+            not any(k in line.lower() for k in ["email", "phone", "linkedin", "github"])
+        ):
+            return line.title()
+
+    # fallback: email username
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+', cv_text)
+    if email_match:
+        name_part = email_match.group(0).split("@")[0]          
+        name_part = re.sub(r'\d+', '', name_part)             
+        name = name_part.replace(".", " ").title()             
+    return name
 
 def search_google_serpapi(query, num_results=3):
     """Fetch top Google search results using SerpAPI."""
@@ -270,15 +307,15 @@ def clean_extracted_text_preserve_lines(text: str) -> str:
     return clean_text
 
 
-def build_faiss_index_from_text(text, index_path, chunk_size=800, overlap=100):
+def build_faiss_index_from_text(text, index_path,uploaded_file=None, chunk_size=800, overlap=100):
     """
     Builds FAISS index + metadata with page and line references.
     Each chunk will include page_no, line_start, line_end info.
     """
     
     meta = []
-
     pages = text.split("--- PAGE BREAK ---")
+    
     chunks = []
     page_no = 1
     line_counter = 0
@@ -337,6 +374,24 @@ def build_faiss_index_from_text(text, index_path, chunk_size=800, overlap=100):
         pickle.dump({"chunks": chunks, "meta": meta}, f)
 
     print(f" Built FAISS index with {len(chunks)} chunks and metadata: {index_path}")
+    if uploaded_file:
+        FileChunk.objects.filter(file=uploaded_file).delete()
+
+        total_chunks = len(chunks)
+    try:    
+        total_chunks =len(chunks)
+        for i, chunk_text in enumerate(chunks):
+            FileChunk.objects.create(
+                file=uploaded_file,
+                chunk_index=i,
+                chunk_text=chunk_text,
+                embedding=pickle.dumps(embeddings[i]),   
+                index_path=index_path,
+                total_chunks=total_chunks
+            )
+    except Exception as e:
+        print("Error saving chunk:", e)
+
     return index_path
 
 
@@ -474,19 +529,28 @@ def login_view(request):
             auth_login(request, user)
             request.session['chat_history'] = []
             messages.success(request, "Login successful!")
+
+            if user.is_superuser: 
+                return redirect('admin')
+
             if getattr(user, "is_main", False):
                 return redirect('main')
-            return redirect('chatbot')
+            else:
+                return redirect('chatbot')
+
         else:
             messages.error(request, "Invalid credentials.")
             return redirect('login')
+
     else:
         form = LoginForm()
+
     resp = render(request, "login.html", {"form": form})
     resp['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     resp['Pragma'] = 'no-cache'
     resp['Expires'] = '0'
     return resp
+
 
 
 @never_cache
@@ -542,12 +606,12 @@ def main_view(request):
 
             extracted_text = extract_text_from_pdf_with_fitz(uf.file.path)
             extracted_text = "\n".join(sent_tokenize(extracted_text))
-            uf.extracted_text = extracted_text
+            uf.extracted_text = extracted_text.strip() 
             uf.save()
 
             index_name = f"user_{request.user.id}_file_{uf.id}.index"
             index_path = os.path.join(FAISS_DIR, index_name)
-            build_faiss_index_from_text(extracted_text, index_path)
+            build_faiss_index_from_text(extracted_text, index_path,uploaded_file=uf)
 
             print(f" File '{uf.original_name}' uploaded and indexed for user {request.user.username}")
             messages.success(request, f"File '{uf.original_name}' uploaded and indexed successfully!")
@@ -556,7 +620,6 @@ def main_view(request):
     
     uploaded_files = UploadedFile.objects.filter(uploaded_by=request.user).order_by('-uploaded_at')
     return render(request, "main.html", {"uploaded_files": uploaded_files})
-
 
 @login_required(login_url='login')
 @never_cache
@@ -567,8 +630,9 @@ def chatbot_view(request):
     debug_info = ""
     chat_history = []
     reference_items = []
+    best_file = None
 
-    REDIS_TTL_SECONDS = 60
+    REDIS_TTL_SECONDS = 86400
     redis_key = f"chat_history:{request.user.id}"
 
     try:
@@ -577,136 +641,119 @@ def chatbot_view(request):
     except Exception:
         chat_history = []
 
-    main_user = User.objects.filter(is_main=True).first()
-
-    uploaded_file = (
-        UploadedFile.objects.filter(uploaded_by=request.user).order_by("-uploaded_at").first()
-        if request.user.is_main
-        else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
-    )
+    # main_user = User.objects.filter(is_main=True).first()
 
     if request.method == "POST":
         q = request.POST.get("question", "").strip()
 
         if not q:
             response_text = "Please enter a question."
-        elif not uploaded_file or not uploaded_file.extracted_text:
-            response_text = "No uploaded file found. Please upload one first."
         else:
             try:
+                all_files = UploadedFile.objects.filter(extracted_text__isnull=False)
+               
+                best_chunks = None
+                best_score = -1
 
-                index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
-                index_path = os.path.join(FAISS_DIR, index_name)
-                meta_path = index_path.replace(".index", "_meta.pkl")
+                for f in all_files:
+                    file_owner_id = f.uploaded_by.id
+                    index_name = f"user_{file_owner_id}_file_{f.id}.index"
+                    index_path = os.path.join(FAISS_DIR, index_name)
+                    meta_path = index_path.replace(".index", "_meta.pkl")
 
+                    if not os.path.exists(index_path) or not os.path.exists(meta_path):
+                        build_faiss_index_from_text(f.extracted_text, index_path)
 
-                if not os.path.exists(index_path) or not os.path.exists(meta_path):
-                    build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
+                    index, chunks, meta = load_faiss_index(index_path)
+                    q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
+                    D, I = index.search(q_emb, 5)
 
-  
-                conceptual_keywords = ["benefit", "purpose", "role", "importance", "use", "impact", "objective"]
-                if any(word in q.lower() for word in conceptual_keywords):
-                    q += ""
+                    distances = []
+                    for d, idx in zip(D[0], I[0]):
+                        if idx >= 0 and idx < len(chunks):
+                            distances.append(float(d))
 
-
-                index, chunks, meta = load_faiss_index(index_path)
-                q_emb = embed_model.encode([q], convert_to_numpy=True).astype("float32")
-                D, I = index.search(q_emb, 5)
-
-                distances, retrieved, retrieved_meta = [], [], []
-                for idx, d in zip(I[0], D[0]):
-                    if idx >= 0 and idx < len(chunks):
-                        retrieved.append(chunks[idx])
-                        retrieved_meta.append(meta[idx])
-                        distances.append(float(d))
-
-                if not retrieved:
-                    response_text = "Information not clearly found in the document."
-                else:
+                    if not distances:
+                        continue
 
                     d_min, d_max = float(np.min(distances)), float(np.max(distances))
                     similarities = [1 - ((d - d_min) / (d_max - d_min + 1e-9)) for d in distances]
                     avg_sim = float(np.mean(similarities))
-                    print(f" DEBUG | Distances: {distances}")
-                    print(f" DEBUG | Avg Similarity: {avg_sim:.4f}")
 
-                    if avg_sim < 0.15:
-                        response_text = "Information not clearly found in the document."
+                    if avg_sim > best_score:
+                        best_score = avg_sim
+                        best_file = f
+                        best_chunks = [chunks[idx] for idx in I[0] if idx >= 0 and idx < len(chunks)]
+
+                if not best_file or not best_chunks or best_score < 0.15:
+                    response_text = "Information not clearly found in the documents."
+                else:
+                    context = "\n\n".join(best_chunks[:3]).strip()
+
+                    conceptual_keywords = ["benefit", "purpose", "role", "importance", "use", "impact", "objective"]
+                    if any(word in q.lower() for word in conceptual_keywords):
+                        q_prompt = "[Conceptual] " + q
                     else:
-                        context = "\n\n".join(retrieved[:3]).strip()
-                        print("\n DEBUG | Full Context Sent to LLaMA:\n", context[:1200])
-                        print("\n DEBUG | Question:", q)
+                        q_prompt = q
 
-                     
-                        prompt = f"""
-You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the document context.
-
-**Standard:** ISO 22301:2019 - Business Continuity Management Systems
+                    prompt = f"""
+You are an expert. Answer accurately using ONLY the document context.
 
 **Context:**
 {context}
 
-**Question:** {q}
+**Question:** {q_prompt}
 
 **Guidelines:**
 ✓ Answer based only on provided context
 ✓ Use bullet points for clarity
 ✓ Explain requirements clearly
-✓ If not in context: "Not specified in the provided ISO 22301:2019 sections"
+✓ If not in context: "Not specified in the provided document"
 
 **Answer:**
 """
 
-                        
+                    try:
+                        if len(prompt) > 3500:
+                            prompt = prompt[-3500:]
+                        # res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
+                    except Exception as e:
                         try:
-                            print(" Calling LLaMA...")
-                            print(" Prompt length:", len(prompt))
-                            if len(prompt) > 3500:
-                                prompt = prompt[-3500:]
+                            short_prompt = prompt[-1500:]
+                            # res = llm(prompt=short_prompt, max_tokens=300, temperature=0.3)
+                        except Exception as e2:
+                            res = {"content": "Model failed internally or context too large."}
 
-                            res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
-                            print(" LLaMA responded!")
-
-                        except Exception as e:
-                            print(f" LLaMA crashed: {e}")
-                            print(" Retrying with shorter prompt...")
-                            try:
-                                short_prompt = prompt[-1500:]
-                                res = llm(prompt=short_prompt, max_tokens=300, temperature=0.3)
-                                print(" Fallback LLaMA call succeeded!")
-                            except Exception as e2:
-                                print(f" LLaMA failed again: {e2}")
-                                res = {"content": "Model failed internally or context too large."}
-
-                  
-                        if isinstance(res, dict):
-                            if "choices" in res and len(res["choices"]) > 0:
-                                answer = res["choices"][0].get("text", "").strip()
-                            elif "content" in res:
-                                answer = res["content"].strip()
-                            else:
-                                answer = str(res)
+                    if isinstance(res, dict):
+                        if "choices" in res and len(res["choices"]) > 0:
+                            answer = res["choices"][0].get("text", "").strip()
+                        elif "content" in res:
+                            answer = res["content"].strip()
                         else:
-                            answer = str(res).strip()
+                            answer = str(res)
+                    else:
+                        answer = str(res).strip()
 
-                        answer = re.sub(r"^.*?--- Short Answer ---", "", answer, flags=re.DOTALL)
-                        answer = re.sub(r"\s+", " ", answer).strip()
+                    answer = re.sub(r"^.*?--- Short Answer ---", "", answer, flags=re.DOTALL).strip()
+                    lines = [line.lstrip("- ").strip() for line in answer.split("\n") if line.strip()]
+                    lines = ["• " + line for line in lines]
+                    answer = "\n".join(lines)
 
-                        if not answer or len(answer.split()) < 5:
-                            answer = "Information not clearly found in the document."
+                    if not answer or len(answer.split()) < 5:
+                        answer = "Information not clearly found in the document."
 
-                        response_text = answer
+                    answer += f"\n\nSource: {best_file.original_name}"
 
-       
-                if response_text and "information not" not in response_text.lower():
+                    response_text = answer
+
                     ChatbotQA.objects.create(
                         user=request.user,
-                        uploaded_file=uploaded_file,
+                        uploaded_file=best_file,
                         question=q,
                         answer=response_text.strip()
                     )
 
-              
+
                 chat_history.append({
                     "question": q,
                     "answer": response_text.strip(),
@@ -715,18 +762,228 @@ You are an ISO 22301:2019 BCMS specialist. Answer accurately using ONLY the docu
                 cache.set(redis_key, json.dumps(chat_history), timeout=REDIS_TTL_SECONDS)
 
             except Exception as exc:
-                response_text = f" Error: {exc}\n{traceback.format_exc()}"
+                response_text = f"Error: {exc}\n{traceback.format_exc()}"
 
     return render(request, "chatbot.html", {
         "response": response_text,
         "debug": debug_info,
         "chat_history": chat_history,
-        "uploaded_file": uploaded_file,
+        "uploaded_file": best_file,
         "reference_items": reference_items,
     })
 
 
 
+
+@login_required(login_url='login')
+@never_cache
+def admin_dashboard(request):
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied.")
+        return redirect('login')
+
+    users = User.objects.all()
+    files = UploadedFile.objects.all()
+    chats = ChatbotQA.objects.all()
+    chunks = FileChunk.objects.all().order_by('file','chunk_index')
+
+    return render(request, "admin.html", {
+        "users": users,
+        "files": files,
+        "chats": chats,
+        "chunks": chunks
+    })
+
+
+@login_required(login_url='login')
+@never_cache
+def admin_create_user(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        email = request.POST.get("email")
+        is_main = request.POST.get("is_main") =="on"
+
+        default_password = "123456789"
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "Username already exists.")
+        else:
+            user = User.objects.create_user(username=username, email=email, password=default_password)
+            user.is_main = is_main
+            user.save()
+            messages.success(request, f"User {username} created successfully!")
+    return redirect('admin')
+
+@login_required(login_url='login')
+@never_cache
+def admin_delete_user(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    messages.success(request, f"User deleted successfully!")
+    return redirect('admin')
+
+
+@login_required(login_url='login')
+@never_cache
+def admin_update_user(request, user_id):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        is_main = request.POST.get('is_main') == 'on'
+
+        try:
+            user = User.objects.get(id=user_id)
+            user.username = username
+            user.email = email
+            user.is_main = is_main
+            user.save()
+            return redirect('admin')
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('admin')
+    return redirect('admin')
+
+
+@login_required(login_url='login')
+@never_cache
+def admin_create_file(request):
+    if request.method == "POST":
+        uploaded_file = request.FILES.get('file')
+        category = request.POST.get('category')
+        username = request.POST.get('username')  
+
+        if uploaded_file and category and username:
+            try:
+                user = User.objects.get(username=username, is_main=True) 
+                UploadedFile.objects.create(
+                    uploaded_by=user,  
+                    file=uploaded_file,
+                    original_name=uploaded_file.name,
+                    category=category
+                )
+                messages.success(request, f"File uploaded successfully for {user.username}!")
+            except User.DoesNotExist:
+                messages.error(request, "Selected user does not exist or is not a main user.")
+            return redirect('admin')
+
+        messages.error(request, "Please select a file, category, and user.")
+        return redirect('admin')
+
+    return redirect('admin')
+
+
+@login_required(login_url='login')
+@never_cache
+def admin_update_file(request):
+    if request.method == 'POST':
+        file_id = request.POST.get('file_id')
+        category = request.POST.get('category')
+        file_obj = request.FILES.get('file')  
+
+        try:
+            f = UploadedFile.objects.get(id=file_id)
+            f.category = category
+
+            if file_obj:
+                if f.file:
+                    f.file.delete(save=False)  
+                f.file = file_obj
+                f.original_name = file_obj.name 
+
+            f.save()
+            messages.success(request, "File updated successfully!")
+
+        except UploadedFile.DoesNotExist:
+            messages.error(request, "File not found!")
+
+        return redirect('admin')  
+
+    return redirect('admin')
+
+
+@login_required(login_url='login')
+@never_cache
+def admin_delete_file(request, file_id):
+    file_obj = get_object_or_404(UploadedFile, id=file_id)
+    file_obj.delete()
+    messages.success(request, "File deleted successfully!")
+    return redirect('admin')
+
+@login_required(login_url='login')
+def admin_create_chat(request):
+    if request.method == "POST":
+        user_id = request.POST.get('user_id')
+        file_id = request.POST.get('file_id')
+        question = request.POST.get('question')
+        answer = request.POST.get('answer')
+        session_id = request.POST.get('session_id') or "default"
+
+        if not user_id or not question or not answer:
+            messages.error(request, "Please fill all required fields")
+            return redirect('admin')
+
+        user = get_object_or_404(User, id=user_id)
+        uploaded_file = UploadedFile.objects.filter(id=file_id).first() if file_id else None
+
+        ChatbotQA.objects.create(
+            user=user,
+            username=user.username,
+            session_id=session_id,
+            uploaded_file=uploaded_file,
+            question=question,
+            answer=answer
+        )
+        messages.success(request, "Chat created successfully!")
+        return redirect('admin')
+
+
+@login_required(login_url='login')
+def admin_update_chat(request, chat_id):
+    chat = get_object_or_404(ChatbotQA, id=chat_id)
+    if request.method == "POST":
+        user_id = request.POST.get('user_id')
+        file_id = request.POST.get('file_id')
+        question = request.POST.get('question')
+        answer = request.POST.get('answer')
+
+        user = get_object_or_404(User, id=user_id)
+        uploaded_file = UploadedFile.objects.filter(id=file_id).first() if file_id else None
+
+        chat.user = user
+        chat.username = user.username
+        chat.uploaded_file = uploaded_file
+        chat.question = question
+        chat.answer = answer
+        chat.save()
+
+        messages.success(request, "Chat updated successfully!")
+        return redirect('admin')
+
+
+@login_required(login_url='login')
+def admin_delete_chat(request, chat_id):
+    chat = get_object_or_404(ChatbotQA, id=chat_id)
+    chat.delete()
+    messages.success(request, "Chat deleted successfully!")
+    return redirect('admin')
+
+
+@login_required
+def admin_delete_chunk(request, chunk_id):
+    chunk = get_object_or_404(FileChunk, id=chunk_id)
+    chunk.delete()
+    messages.success(request, "Chunk deleted successfully.")
+    return redirect('admin')
+
+@login_required
+def admin_edit_chunk(request, chunk_id):
+    chunk = get_object_or_404(FileChunk, id=chunk_id)
+    if request.method == "POST":
+        chunk_text = request.POST.get("chunk_text")
+        chunk.chunk_text = chunk_text
+        chunk.save()
+        messages.success(request, "Chunk updated successfully.")
+        return redirect('admin')
 
 
 @csrf_exempt
@@ -911,7 +1168,7 @@ def api_upload_file(request):
 def query_ollama(prompt):
     url = "http://localhost:11434/api/generate"
     payload = {
-        "model": "gemma3:4b",  
+        "model": "llama3.2",  
         "prompt": prompt,
         "stream": False
     }
@@ -1107,109 +1364,242 @@ def api_chat_history(request):
     }, status=200)
 
 
+@login_required
+def interview_home(request):
+    return render(request, "interview_home.html", {
+        "roles": [
+            "Python Developer",
+            "Frontend Developer",
+            "AI/ML Engineer",
+            "Cybersecurity Analyst",
+            "Data Analyst",
+            "Custom"
+        ]
+    })
+
+@login_required
+def interview_start(request):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required")
+
+    cv_file = request.FILES.get("cv_file")
+    if not cv_file:
+        return HttpResponseBadRequest("CV file required")
+
+    cv_text = extract_cv_text(cv_file)
+    candidate_name = extract_candidate_name(cv_text)
+    difficulty = request.POST.get("difficulty", "medium")
+    q_count = int(request.POST.get("question_count", 8))
+
+    session = InterviewSession.objects.create(
+        user=request.user,
+        role="CV-Based Interview",
+        metadata={
+            "difficulty": difficulty,
+            "question_count": q_count,
+            "candidate_name": candidate_name,
+        },
+        cv_text=cv_text
+    )
+
+    session.mark_started()
+
+    cv_short = cv_text[:2000]
+
+    prompt = f"""
+You are an expert AI that ONLY outputs JSON arrays of interview questions.
+STRICT RULES:
+1. Output MUST be valid JSON.
+2. Output MUST start with '[' and end with ']'.
+3. NO extra text, explanations, or formatting outside JSON.
+4. Each question object MUST have:
+   - "q": the question text (string)
+   - "expected": short expected answer (string)
+5. Generate EXACTLY {q_count} questions based on the CV below.
+
+CV:
+{cv_short}
+
+OUTPUT EXAMPLE:
+[
+  {{"q": "Example question?", "expected": "Short expected answer."}}
+]
+"""
+
+    questions_data = []
+
+    try:
+        llm_result = LLM_MODEL(prompt, max_tokens=500, temperature=0.2)
+        raw = llm_result["choices"][0]["text"].strip()
+        print("LLM RAW OUTPUT:", raw)
+
+        raw = re.sub(r"^-?\s*\[?response\]?:", "", raw, flags=re.I).strip()
+        start = raw.find("[")
+        if start == -1:
+            raise ValueError("JSON array not found")
+
+        raw = raw[start:]
+
+        objects = re.findall(r"\{[^{}]*\}", raw, re.S)
+
+        for obj in objects:
+            try:
+                parsed = json.loads(obj)
+                if "q" in parsed:
+                    questions_data.append(parsed)
+            except:
+                continue
+
+        questions_data = questions_data[:q_count]
+
+    except Exception as e:
+        print("LLM Error:", e)
+        questions_data = []
+
+    if not questions_data:
+        questions_data = [
+            {"q": f"Default Question {i+1} based on CV", "expected": ""}
+            for i in range(q_count)
+        ]
+
+    for idx, q in enumerate(questions_data):
+        InterviewQuestion.objects.create(
+            session=session,
+            order=idx + 1,
+            text=q.get("q", f"Question {idx+1}"),
+            expected=q.get("expected", "")
+        )
+
+    return redirect("interview_process")
 
 
 
-# SD_MODEL_PATH = "runwayml/stable-diffusion-v1-5"
-# pipe = StableDiffusionPipeline.from_pretrained(SD_MODEL_PATH, torch_dtype=torch.float32)
-# pipe = pipe.to("cpu")  # force CPU
+@login_required
+def interview_process(request):
+    session = InterviewSession.objects.filter(user=request.user, status="in_progress").order_by("-created_at").first()
+    if not session:
+        return redirect("interview_home")
 
-# TEMP_IMG_DIR = os.path.join("media", "temp_images")
-# os.makedirs(TEMP_IMG_DIR, exist_ok=True)
+    next_q = session.questions.filter(responses__isnull=True).first()
 
+    if not next_q:
+        return redirect("interview_finish")
 
-# @csrf_exempt
-# def api_chatbot(request):
-#     if request.method != "POST":
-#         return JsonResponse({"status": "error", "message": "Only POST allowed"}, status=405)
-
-#     try:
-#         data = json.loads(request.body.decode("utf-8"))
-#     except json.JSONDecodeError:
-#         return JsonResponse({"status": "error", "message": "Invalid JSON format"}, status=400)
-
-#     session_id = data.get("session_id")
-#     username = data.get("username")
-#     question = data.get("question", "").strip()
-#     generate_image = data.get("generate_image", False)
-
-#     if not session_id or not username:
-#         return JsonResponse({"status": "error", "message": "session_id and username required"}, status=400)
-#     if not question:
-#         return JsonResponse({"status": "error", "message": "Empty question"}, status=400)
-
-#     # Verify session
-#     try:
-#         session = Session.objects.get(session_key=session_id)
-#         user_id = session.get_decoded().get("_auth_user_id")
-#         user = get_user_model().objects.get(id=user_id)
-#     except Exception:
-#         return JsonResponse({"status": "error", "message": "Invalid or expired session"}, status=401)
-
-#     response_data = {
-#         "status": "ok",
-#         "username": user.username,
-#         "session_id": session.session_key,
-#         "question": question,
-#         "file_name": None,
-#         "answer": None,
-#         "image_url": None,
-#     }
-
-#     try:
-#         # IMAGE FLOW
-#         if generate_image:
-#             prompt = question
-#             image = pipe(prompt, height=512, width=512).images[0]
-#             img_filename = f"{uuid.uuid4().hex}.png"
-#             img_path = os.path.join(TEMP_IMG_DIR, img_filename)
-#             image.save(img_path)
-#             response_data["image_url"] = f"/media/temp_images/{img_filename}"
-#             response_data["answer"] = f"Image generated for prompt: {question}"
-
-#         # TEXT QA FLOW
-#         else:
-#             main_user = get_user_model().objects.filter(is_main=True).first()
-#             uploaded_file = (
-#                 UploadedFile.objects.filter(uploaded_by=user).order_by("-uploaded_at").first()
-#                 if getattr(user, "is_main", False)
-#                 else UploadedFile.objects.filter(uploaded_by=main_user).order_by("-uploaded_at").first()
-#             )
-
-#             if uploaded_file and uploaded_file.extracted_text:
-#                 response_data["file_name"] = uploaded_file.original_name
-
-               
-#                 index_name = f"user_{main_user.id}_file_{uploaded_file.id}.index"
-#                 index_path = os.path.join(FAISS_DIR, index_name)
-#                 if not os.path.exists(index_path):
-#                     build_faiss_index_from_text(uploaded_file.extracted_text, index_path)
-#                 index, chunks, meta = load_faiss_index(index_path)
-#                 q_emb = embed_model.encode([question], convert_to_numpy=True).astype("float32")
-#                 D, I = index.search(q_emb, 5)
-#                 retrieved = [chunks[idx] for idx in I[0] if idx >= 0]
-#                 context = "\n\n".join(retrieved[:3]).strip()
-#                 prompt = f"You are ISO 22301 expert.\nContext:\n{context}\n\nQuestion: {question}\nAnswer:"
-#                 res = llm(prompt=prompt, max_tokens=400, temperature=0.2)
-#                 answer = res["choices"][0]["text"].strip() if isinstance(res, dict) else str(res).strip()
-
-#                 # For now, simulated answer
-#                 answer = "Simulated answer based on uploaded file content."
-#                 response_data["answer"] = answer
-#             else:
-#                 response_data["answer"] = "No uploaded file found."
-
-#         # Save chat
-#         ChatbotQA.objects.create(
-#             user=user,
-#             uploaded_file=uploaded_file if not generate_image else None,
-#             question=question,
-#             answer=response_data["answer"]
-#         )
-
-#         return JsonResponse(response_data)
-
-#     except Exception as e:
-#         return JsonResponse({"status": "error", "message": str(e)}, status=500)
+    return render(request, "interview_process.html", {
+        "session": session,
+        "question": next_q
+    })
 
 
+@login_required
+def interview_next_question(request):
+    session = InterviewSession.objects.filter(user=request.user, status="in_progress").order_by("-created_at").first()
+    if not session:
+        return render(request, "interview_question.html", {"question": None})
+
+    next_q = session.questions.filter(responses__isnull=True).first()
+    return render(request, "interview_question.html", {"question": next_q})
+
+MAX_TOKENS = 1500  
+
+@login_required
+def interview_submit_answer(request):
+    if request.method != "POST":
+        return redirect("interview_process")
+
+    session = InterviewSession.objects.filter(user=request.user, status="in_progress").order_by("-created_at").first()
+    if not session:
+        return redirect("interview_home")
+    print("POST DATA:", request.POST) 
+    question_id = request.POST.get("question_id")
+    answer_text = request.POST.get("final_answer")
+    print("RAW POST:", request.POST)
+    if answer_text:
+        answer_text = answer_text.strip()
+    else:
+        answer_text = ""
+
+    question = get_object_or_404(InterviewQuestion, id=question_id, session=session)
+
+    score = 0.0
+    feedback = "No answer provided."
+
+    if answer_text:
+        cv_text = session.cv_text or ""
+        cv_short = cv_text[:1500]
+        q_text = question.text[:500]
+        ans_text = answer_text[:1000]
+
+        llm_prompt = f"""
+Score the answer from 0 to 10.
+Return ONLY JSON in this format:
+{{"score": number, "feedback": "short feedback"}}
+
+Question: {q_text}
+Answer: {ans_text}
+"""
+
+        try:
+            llm_result = LLM_MODEL(llm_prompt, max_tokens=80, temperature=0.0)
+
+            raw_text = llm_result["choices"][0]["text"].strip()
+            match = re.search(r'\{.*?\}', raw_text, re.DOTALL)
+
+            if match:
+                eval_data = json.loads(match.group(0))
+                score = float(eval_data.get("score", 5.0))
+                feedback = eval_data.get("feedback", "No feedback provided.")
+            else:
+                print("No valid JSON found in LLM output, using placeholder.")
+                score = 5.0
+                feedback = "Auto-evaluation placeholder."
+
+        except Exception as e:
+            print("LLM scoring error:", e)
+            score = 5.0
+            feedback = "Auto-evaluation placeholder."
+
+
+    response_obj, created = InterviewResponse.objects.update_or_create(
+    question=question,
+    defaults={
+        "answer_text": answer_text,
+        "score": score,
+        "feedback": feedback
+    }
+)
+
+    print(f"Saved response: QID={question.id}, Answer={answer_text}, Score={score}, Feedback={feedback}")
+
+    return redirect("interview_process")
+
+
+
+@login_required
+def interview_finish(request):
+    session = InterviewSession.objects.filter(user=request.user, status="in_progress").order_by("-created_at").first()
+    if not session:
+        return redirect("interview_home")
+
+    total, count = 0, 0
+    for q in session.questions.all():
+        r = q.responses.first()
+        if r:
+            total += r.score
+            count += 1
+
+    session.total_score = total / count if count else 0
+    session.mark_completed()
+    session.metadata["answered_count"] = count
+    session.save()
+
+    return redirect("interview_report")
+
+@login_required
+def interview_report(request):
+    session = InterviewSession.objects.filter(user=request.user).order_by("-created_at").first()
+    if not session:
+        return redirect("interview_home")
+
+    questions = session.questions.all().prefetch_related("responses")
+    return render(request, "interview_report.html", {"session": session, "questions": questions})

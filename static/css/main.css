@@ -110,7 +110,7 @@ header .nav a:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   width: 90%;
   max-width: 900px;
-  margin: 50px auto; /* spacing below navbar */
+  margin: 50px auto; 
 }
 
 h2, h3 {

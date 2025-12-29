@@ -1,5 +1,5 @@
 /* ==============================
-   🌟 Signup Page Styling
+    Signup Page Styling
    ============================== */
 body {
   font-family: 'Poppins', sans-serif;
@@ -64,7 +64,7 @@ input:focus {
 
 .password-wrapper input {
   width: 100%;
-  padding-right: 40px; /* leaves room for icon */
+  padding-right: 40px; 
 }
 
 .password-wrapper .toggle-password {

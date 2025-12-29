@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Interview Report — {{ session.role }}</h2>
+<p>Candidate: {{ session.metadata.candidate_name }}</p>
+<p>Started: {{ session.started_at }} | Completed: {{ session.completed_at }}</p>
+<p>Total Score: {{ session.total_score }}</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>Question</th>
+      <th>Answer</th>
+      <th>Score</th>
+      <th>Feedback</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for q in questions %}
+      <tr>
+        <td>{{ q.order }}</td>
+        <td>{{ q.text }}</td>
+        <td>
+    {% with response=q.responses.first %}
+        {% if response %}
+            {{ response.answer_text }}
+        {% else %}
+            <em>Not answered</em>
+        {% endif %}
+    {% endwith %}
+</td>
+<td>
+    {% with response=q.responses.first %}
+        {% if response %}
+            {{ response.score }}
+        {% endif %}
+    {% endwith %}
+</td>
+<td>
+    {% with response=q.responses.first %}
+        {% if response %}
+            {{ response.feedback }}
+        {% endif %}
+    {% endwith %}
+</td>
+
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<style>
+h2 {
+    text-align: center;
+    color: #1e3c72;
+    margin-bottom: 20px;
+}
+
+p {
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+thead {
+    background: linear-gradient(135deg, #2a5298, #1e3c72);
+    color: white;
+}
+
+thead th {
+    padding: 12px 10px;
+    text-align: left;
+}
+
+tbody tr {
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+tbody tr:nth-child(even) {
+    background: #f7f9fb;
+}
+
+tbody tr:hover {
+    background: #e8f0fe;
+}
+
+tbody td {
+    padding: 12px 10px;
+    vertical-align: top;
+}
+
+em {
+    color: #999;
+    font-style: italic;
+}
+
+div {
+    margin-bottom: 6px;
+}
+
+@media(max-width: 768px){
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    thead tr {
+        display: none;
+    }
+    tbody tr {
+        margin-bottom: 15px;
+        border-bottom: 2px solid #ddd;
+    }
+    tbody td {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+    }
+    tbody td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #1e3c72;
+    }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+
+    const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+    )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+
+    document.querySelectorAll('th').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        Array.from(table.querySelectorAll('tbody tr'))
+            .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => table.querySelector('tbody').appendChild(tr) );
+    })));
+});
+</script>
+{% endblock %}

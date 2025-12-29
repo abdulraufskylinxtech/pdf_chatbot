@@ -1,0 +1,29 @@
+{% if question %}
+<div id="question-box">
+    <h3>Question {{ question.order }}</h3>
+    <p>{{ question.text }}</p>
+</div>
+
+<div id="answer-box">
+    <label>Your Answer:</label>
+    <textarea id="answer-input" rows="6" style="width:100%"></textarea>
+    <button id="submit-answer">Submit Answer</button>
+</div>
+{% else %}
+<div id="question-box">
+    <p>No more questions. You can finish the interview.</p>
+</div>
+<div id="answer-box" style="display:none;"></div>
+{% endif %}
+
+<script>
+    async function loadNext() {
+    const res = await fetch(`/interview/${sessionId}/next/`);
+    const html = await res.text();
+    document.getElementById("interview-area").innerHTML = html;
+
+    if(document.getElementById("submit-answer")){
+        document.getElementById("submit-answer").addEventListener("click", submitAnswer);
+    }
+}
+</script>

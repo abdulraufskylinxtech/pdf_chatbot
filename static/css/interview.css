@@ -1,0 +1,4 @@
+#interview-area { max-width: 900px; margin: 20px auto; padding: 12px; border: 1px solid #eee; border-radius: 8px; }
+#question-box { background: #fafafa; padding: 12px; border-radius: 6px; margin-bottom: 10px;}
+#answer-box textarea { font-family: inherit; padding: 8px; }
+#feedback-box { background:#f6ffed; padding:10px; border-radius:6px; margin-top:10px;}

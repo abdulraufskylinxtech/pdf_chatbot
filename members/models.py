@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.db import models
+from django.utils import timezone
 from django.conf import settings
 from .utils import delete_faiss_index
 import uuid
@@ -51,6 +52,20 @@ class UploadedFile(models.Model):
         except Exception as e:
             print(f"Warning: FAISS index not deleted -> {e}")
         super().delete(*args, **kwargs)
+
+
+class FileChunk(models.Model):
+    file = models.ForeignKey(UploadedFile, on_delete=models.CASCADE, related_name="chunks")
+    chunk_index = models.IntegerField()  
+    chunk_text = models.TextField()       
+    embedding = models.BinaryField()      
+    index_path = models.CharField(max_length=500)
+    total_chunks = models.IntegerField()  
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Chunk {self.chunk_index} of File {self.file.id}"
+
 
 
 class ChatbotQA(models.Model):
@@ -125,4 +140,62 @@ class ApiChatMessage(models.Model):
     answer = models.TextField(blank=True, null=True)
     references = models.JSONField(null=True, blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+
+class InterviewSession(models.Model):
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    )
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="interview_sessions")
+    role = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    cv_text = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    total_score = models.FloatField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)  
+
+    def mark_started(self):
+        self.started_at = timezone.now()
+        self.status = "in_progress"
+        self.save(update_fields=["started_at","status"])
+
+    def mark_completed(self):
+        self.completed_at = timezone.now()
+        self.status = "completed"
+        self.save(update_fields=["completed_at","status"])
+
+    def __str__(self):
+        return f"Interview {self.id} ({self.role}) - {self.user.username}"
+
+
+class InterviewQuestion(models.Model):
+    session = models.ForeignKey(InterviewSession, on_delete=models.CASCADE, related_name="questions")
+    order = models.PositiveIntegerField(default=0)
+    text = models.TextField()
+    expected = models.TextField(blank=True, default="")  
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"Q{self.order} ({self.session.id})"
+
+
+class InterviewResponse(models.Model):
+    question = models.ForeignKey(InterviewQuestion, on_delete=models.CASCADE, related_name="responses")
+    answer_text = models.TextField()
+    score = models.FloatField(null=True, blank=True)
+    feedback = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Response for Q{self.question.order} (score={self.score})"
 

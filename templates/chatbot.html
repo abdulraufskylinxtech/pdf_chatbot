@@ -8,7 +8,7 @@
   <title>ChatDOC | Smart Chatbot</title>
   <link rel="stylesheet" href="{% static 'css/chatbot.css' %}">
   <style>
-    /* ===== GLOBAL STYLES ===== */
+   
     body {
       margin: 0;
       font-family: "Poppins", sans-serif;
@@ -19,7 +19,6 @@
       min-height: 100vh;
     }
 
-    /* ===== HEADER ===== */
     header {
       background: linear-gradient(135deg, #2a5298, #1e3c72);
       color: white;
@@ -83,7 +82,6 @@
       color: #a8d0ff;
     }
 
-    /* ===== CHAT CONTAINER ===== */
     .chat-container {
       flex: 1;
       width: 85%;
@@ -110,7 +108,7 @@
       color: #1e3c72;
     }
 
-    /* ===== CHAT FORM ===== */
+   
     .chat-form {
       display: flex;
       gap: 10px;
@@ -148,7 +146,7 @@
       box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);
     }
 
-    /* ===== CHAT OUTPUT ===== */
+   
     .chat-output {
       margin-top: 25px;
       background: #fdfdff;
@@ -186,7 +184,7 @@
       color: #1e3c72;
     }
 
-    /* ===== REFERENCES ===== */
+   
     .references-box {
       margin-top: 15px;
       padding: 15px;
@@ -209,7 +207,6 @@
       border-radius: 5px;
     }
 
-    /* ===== CHAT HISTORY ===== */
     .chat-history {
       margin-top: 25px;
       background: #fff;
@@ -229,7 +226,7 @@
       border-bottom: none;
     }
 
-    /* ===== FLOATING BUTTONS ===== */
+   
     .floating-btn {
       position: fixed;
       bottom: 25px;
@@ -253,7 +250,7 @@
       transform: scale(1.1);
     }
 
-    /* ===== FOOTER ===== */
+  
     footer {
       text-align: center;
       padding: 15px;
@@ -261,7 +258,7 @@
       color: #666;
     }
 
-    /* ===== DARK MODE (OPTIONAL) ===== */
+   
     @media (prefers-color-scheme: dark) {
       body {
         background: linear-gradient(135deg, #0d1b2a, #1b263b);
@@ -286,6 +283,141 @@
         border-left: 4px solid #3a7bd5;
       }
     }
+
+    #interviewModal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+
+
+  #interviewModalContent {
+    background: #fff;
+    width: 90%;
+    max-width: 440px;
+    margin: 80px auto;
+    padding: 30px 35px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    border: 1px solid #e0e0e0;
+    animation: slideIn 0.3s ease;
+  }
+
+  #interviewModalContent span {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 22px;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.2s ease;
+  }
+
+  #interviewModalContent span:hover {
+    color: #007bff;
+  }
+
+  #interviewModalContent form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #interviewModalContent label {
+    font-weight: 500;
+    color: #333;
+    font-size: 15px;
+  }
+
+  #interviewModalContent select,
+  #interviewModalContent input[type="number"] {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+    outline: none;
+    transition: border 0.3s, box-shadow 0.3s;
+  }
+
+  #interviewModalContent select:focus,
+  #interviewModalContent input[type="number"]:focus {
+    border-color: #1e3c72;
+    box-shadow: 0 0 6px rgba(30,60,114,0.3);
+  }
+
+  #interviewModalContent button[type="submit"] {
+    background: linear-gradient(135deg, #2a5298, #1e3c72);
+    color: white;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+  }
+
+  #interviewModalContent button[type="submit"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(30,60,114,0.3);
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+  }
+
+  .interview-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+}
+
+.interview-modal-box {
+    background: #fff;
+    width: 90%;
+    max-width: 600px;
+    margin: 80px auto;
+    padding: 30px;
+    border-radius: 12px;
+    position: relative;
+}
+
+/* Close Button */
+.interview-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+
+  @keyframes slideIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+
+  @media (max-width: 480px) {
+    #interviewModalContent {
+      margin: 60px 15px;
+      padding: 25px 20px;
+    }
+  }
   </style>
 </head>
 
@@ -305,6 +437,18 @@
     </div>
   </header>
 
+{% block content %}{% endblock %}
+
+<a href="javascript:void(0);" class="interview-btn" onclick="openInterviewModal()" style="position:fixed;right:102px;bottom:25px;z-index:9999;background:#1e3c72;color:#fff;padding:18px 21px;border-radius:999px;text-decoration:none;">
+  Conduct Interview
+</a>
+
+<div id="interviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.6); z-index:10000;">
+    <div id="interviewModalContent">
+      Loading...
+    </div>
+  </div>
+</div>
   <div class="chat-container">
     <h2>Ask Your Question</h2>
 
@@ -353,8 +497,27 @@
 
   <footer>© {{ now|date:"Y" }} ChatDOC — Built by <strong></strong></footer>
 
+
   <script>
-    // Ensure session is valid
+    function openInterviewModal() {
+  document.getElementById('interviewModal').style.display = 'block';
+  
+  // AJAX load interview_home content
+  fetch("{% url 'interview_home' %}")
+    .then(response => response.text())
+    .then(html => {
+      document.getElementById('interviewModalContent').innerHTML = html;
+    })
+    .catch(err => {
+      document.getElementById('interviewModalContent').innerHTML = "Failed to load interview page.";
+      console.error(err);
+    });
+}
+
+function closeInterviewModal() {
+  document.getElementById('interviewModal').style.display = 'none';
+}
+
     window.addEventListener("pageshow", (event) => {
       if (event.persisted) window.location.reload(true);
       fetch("/check-session/")
@@ -364,4 +527,5 @@
     });
   </script>
 </body>
+
 </html>

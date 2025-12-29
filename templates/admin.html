@@ -1,0 +1,636 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="sidebar">
+            <div class="admin-profile">
+                <div class="profile-img">
+                    {% if request.user.profile_picture %}
+                    <img src="{{ request.user.profile_picture.url }}" alt="Profile">
+                    {% else %}
+                    <img src="{% static 'images/default_profile.png' %}" alt="Default Profile">
+                    {% endif %}
+                </div>
+                <div class="profile-info">
+                    <h3>{{ request.user.username }}</h3>
+                    <p class="status">Online</p>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li onclick="showTab('users')">Users</li>
+                <li onclick="showTab('files')">Files</li>
+                <li onclick="showTab('chats')">Chatbot</li>
+                <li onclick="showTab('file-chunk')">File chunks</li>
+            </ul>
+        </div>
+
+        <div class="top-bar">
+            <h2>Admin Dashboard</h2>
+            <form action="{% url 'logout' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
+        </div>
+
+
+
+
+
+        <div class="main-content">
+
+
+            <section id="users" class="tab-section">
+                <h2>Users</h2>
+                <button onclick="openCreateModal()">Create User<svg xmlns="http://www.w3.org/2000/svg" width="24"
+                        height="15" fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
+                    </svg>
+                </button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>is_main</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td>{{ u.username }}</td>
+                            <td>{{ u.email }}</td>
+                            <td class="center">
+                                <span>{% if u.is_main %}✓{% else %}✖{% endif %}</span>
+                                <!-- <input type="checkbox" class="is-main-checkbox" data-user-id="{{ u.id }}" {% if u.is_main %} checked {% endif %}> -->
+                            </td>
+                            <td class="actions">
+                                <button class="update-user-btn"
+                                    onclick="openUpdateUserModal({{ u.id }}, '{{ u.username|escapejs }}', '{{ u.email|escapejs }}', {{ u.is_main|yesno:'true,false' }})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="15" fill="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 17.25V21h3.75l11-11.03-3.75-3.75L3 17.25zM20.71 7.04a1.004 1.004 0 0 0 0-1.42l-2.34-2.34a1.004 1.004 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" />
+                                    </svg>
+
+                                </button>
+
+                                <form action="{% url 'admin_delete_user' u.id %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="button" class="delete-btn"
+                                        onclick="openDeleteModal('{% url 'admin_delete_user' u.id %}')"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="20" height="15"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M3 6h18v2H3V6zm2 3h14l-1.5 12.5c-.1.9-.9 1.5-1.8 1.5H8.3c-.9 0-1.7-.6-1.8-1.5L5 9zm5 2v9h2v-9H10zm4 0v9h2v-9h-2zM9 4V2h6v2h5v2H4V4h5z" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <div id="updateUserModal" class="file-modal">
+                <div class="modal-content3">
+                    <span class="close" onclick="closeUpdateUserModal()">&times;</span>
+                    <h3>Update User</h3>
+                    <form id="updateUserForm" method="POST" action="{% url 'admin_update_user' 0 %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" id="updateUserId">
+                        <label>Username:</label>
+                        <input type="text" name="username" id="updateUsername" required>
+                        <label>Email:</label>
+                        <input type="email" name="email" id="updateEmail" required>
+                        <label>
+                            <input type="checkbox" name="is_main" id="updateIsMain"> Is Main
+                        </label>
+                        <button type="button" class="yes-btn" onclick="openSaveUpdateModal()">Update</button>
+
+                    </form>
+                </div>
+            </div>
+
+
+            <div id="createUserModal" class="file-modal">
+                <div class="modal-content2">
+                    <span class="close" onclick="closeCreateModal()">&times;</span>
+                    <h3>Create User</h3>
+                    <form id="createUserForm" method="POST" action="{% url 'admin_create_user' %}">
+                        {% csrf_token %}
+                        <label>Username:</label>
+                        <input type="text" name="username" required>
+
+                        <label>Email:</label>
+                        <input type="email" name="email" required>
+
+                        <label>
+                            <input type="checkbox" name="is_main"> Is Main
+                        </label>
+
+                        <button type="button" class="yes-btn" onclick="openSaveCreateModal()">Create</button>
+
+                    </form>
+                </div>
+            </div>
+
+
+            <div id="saveUpdateModal" class="file-modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveUpdateModal()">&times;</span>
+                    <p>Are you sure you want to save this update?</p>
+                    <button type="button" class="yes-btn" onclick="submitUpdateForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveUpdateModal()">No</button>
+                </div>
+            </div>
+
+            <div id="saveCreateModal" class="file-modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveCreateModal()">&times;</span>
+                    <p>Are you sure you want to create this user?</p>
+                    <button type="button" class="yes-btn" onclick="submitCreateForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveCreateModal()">No</button>
+                </div>
+            </div>
+
+
+
+            <div id="deleteModal" class="modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <p>Are you sure you want to delete?</p>
+
+                    <form id="deleteForm" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="yes-btn">Yes</button>
+                        <button type="button" class="no-btn" onclick="closeModal()">No</button>
+                    </form>
+                </div>
+            </div>
+
+
+
+
+            <section id="files" class="tab-section" style="display:none;">
+                <h2>Uploaded Files</h2>
+                <button onclick="openCreateFileModal()">Upload File
+                    <svg width="18" height="18" viewBox="0 0 18 24" fill="none" stroke="white" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="12" y1="12" x2="12" y2="18" />
+                        <line x1="9" y1="15" x2="15" y2="15" />
+                    </svg>
+                </button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>User</th>
+                            <th>File</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in files %}
+                        <tr>
+                            <td>{{ f.id }}</td>
+                            <td>{% if f.uploaded_by %}
+                                {{ f.uploaded_by.username }}
+                                {% else %}
+                                Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ f.original_name }}</td>
+                            <td>{{ f.category }}</td>
+                            <td class="actions">
+                                <button class="update-file-btn"
+                                    onclick="openUpdateFileModal({{ f.id }}, '{{ f.category|escapejs }}')"><svg
+                                        xmlns="http://www.w3.org/2000/svg" width="20" height="15" fill="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 17.25V21h3.75l11-11.03-3.75-3.75L3 17.25zM20.71 7.04a1.004 1.004 0 0 0 0-1.42l-2.34-2.34a1.004 1.004 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" />
+                                    </svg></button>
+
+                                <form action="{% url 'admin_delete_file' f.id %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="button" class="delete-btn"
+                                        onclick="openDeleteFileModal('{% url 'admin_delete_file' f.id %}')"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="20" height="15"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M3 6h18v2H3V6zm2 3h14l-1.5 12.5c-.1.9-.9 1.5-1.8 1.5H8.3c-.9 0-1.7-.6-1.8-1.5L5 9zm5 2v9h2v-9H10zm4 0v9h2v-9h-2zM9 4V2h6v2h5v2H4V4h5z" />
+                                        </svg></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="center">No files uploaded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+            <div id="createFileModal" class="file-modal">
+                <div class="modal-content2">
+                    <span class="close" onclick="closeCreateFileModal()">&times;</span>
+                    <h3>Upload File</h3>
+                    <form id="createFileForm" method="POST" action="{% url 'admin_create_file' %}"
+                        enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <label>User:</label>
+                        <select name="username" required>
+                            {% for u in users %}
+                            {% if u.is_main %}
+                            <option value="{{ u.username }}">{{ u.username }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+
+
+                        <label>Choose File:</label>
+                        <input type="file" name="file" required>
+
+                        <label>Category:</label>
+                        <input type="text" name="category" required>
+
+                        <button type="button" class="yes-btn" onclick="openSaveCreateFileModal()">Upload</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div id="updateFileModal" class="file-modal">
+                <div class="modal-content3">
+                    <span class="close" onclick="closeUpdateFileModal()">&times;</span>
+                    <h3>Update File</h3>
+                    <form id="updateFileForm" method="POST" enctype="multipart/form-data"
+                        action="{% url 'admin_update_file' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="file_id" id="updateFileId">
+                        <label>Category:</label>
+                        <input type="text" name="category" id="updateFileCategory" required>
+                        <label>Replace File:</label>
+                        <input type="file" name="file" id="updateFileInput">
+                        <button type="button" class="yes-btn" onclick="openSaveUpdateFileModal()">Update</button>
+                    </form>
+                </div>
+            </div>
+
+
+            <div id="saveCreateFileModal" class="file-modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveCreateFileModal()">&times;</span>
+                    <p>Are you sure you want to upload this file?</p>
+                    <button type="button" class="yes-btn" onclick="submitCreateFileForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveCreateFileModal()">No</button>
+                </div>
+            </div>
+
+
+            <div id="saveUpdateFileModal" class="file-modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveUpdateFileModal()">&times;</span>
+                    <p>Are you sure you want to save this update?</p>
+                    <button type="button" class="yes-btn" onclick="submitUpdateFileForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveUpdateFileModal()">No</button>
+                </div>
+            </div>
+
+
+            <div id="deleteFileModal" class="modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeDeleteFileModal()">&times;</span>
+                    <p>Are you sure you want to delete this file?</p>
+
+                    <form id="deleteFileForm" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="yes-btn-file">Yes</button>
+                        <button type="button" class="no-btn-file" onclick="closeDeleteFileModal()">No</button>
+                    </form>
+                </div>
+            </div>
+
+
+
+
+
+            <section id="chats" class="tab-section" style="display:none;">
+                <h2>Chatbot</h2>
+                <button onclick="openCreateChatModal()">Create Chat<svg width="24" height="24" viewBox="0 0 18 24"
+                        fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z" />
+                        <circle cx="17.5" cy="6.5" r="2.2" fill="currentColor" />
+                        <line x1="17.5" y1="5" x2="17.5" y2="8" stroke="white" stroke-width="1.6" />
+                        <line x1="16" y1="6.5" x2="19" y2="6.5" stroke="white" stroke-width="1.6" />
+                    </svg>
+                </button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>File</th>
+                            <th>Question</th>
+                            <th>Answer</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in chats %}
+                        <tr>
+                            <td>{{ c.user.username }}</td>
+                            <td>{% if c.uploaded_file %}{{ c.uploaded_file.original_name }}{% else %}No File{% endif %}
+                            </td>
+                            <td>{{ c.question }}</td>
+                            <td>{{ c.answer }}</td>
+                            <td class="actions">
+                                <button class="update-chat-btn"
+                                    onclick="openUpdateChatModal({{ c.id }}, {{ c.user.id }},'{{ c.uploaded_file.id|default:''}}','{{ c.question|escapejs }}', '{{ c.answer|escapejs }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="15" fill="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 17.25V21h3.75l11-11.03-3.75-3.75L3 17.25zM20.71 7.04a1.004 1.004 0 0 0 0-1.42l-2.34-2.34a1.004 1.004 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" />
+                                    </svg>
+                                </button>
+
+                                <form action="{% url 'admin_delete_chat' c.id %}" method="POST" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="button" class="delete-btn"
+                                        onclick="openDeleteModal('{% url 'admin_delete_chat' c.id %}')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="15"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M3 6h18v2H3V6zm2 3h14l-1.5 12.5c-.1.9-.9 1.5-1.8 1.5H8.3c-.9 0-1.7-.6-1.8-1.5L5 9zm5 2v9h2v-9H10zm4 0v9h2v-9h-2zM9 4V2h6v2h5v2H4V4h5z" />
+                                        </svg>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+
+
+            <div id="createChatModal" class="modal">
+                <div class="modal-content2">
+                    <span class="close" onclick="closeCreateChatModal()">&times;</span>
+                    <h3>Create Chat</h3>
+                    <form id="createChatForm" method="POST" action="{% url 'admin_create_chat' %}">
+                        {% csrf_token %}
+                        <label>User:</label>
+                        <select name="user_id" required>
+                            {% for u in users %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label>File (Optional):</label>
+                        <select name="file_id">
+                            <option value="">None</option>
+                            {% for f in files %}
+                            <option value="{{ f.id }}">{{ f.original_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label>Question:</label>
+                        <textarea name="question" required></textarea>
+
+                        <label>Answer:</label>
+                        <textarea name="answer" required></textarea>
+
+                        <button type="button" class="yes-btn" onclick="openSaveCreateChatModal()">Create</button>
+                    </form>
+                </div>
+            </div>
+
+
+
+
+            <div id="updateChatModal" class="modal">
+                <div class="modal-content3">
+                    <span class="close" onclick="closeUpdateChatModal()">&times;</span>
+                    <h3>Update Chat</h3>
+                    <form id="updateChatForm" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="chat_id" id="updateChatId">
+
+                        <label>User:</label>
+                        <select name="user_id" id="updateChatUser" required>
+                            {% for u in users %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label>File (Optional):</label>
+                        <select name="file_id" id="updateChatFile">
+                            <option value="">None</option>
+                            {% for f in files %}
+                            <option value="{{ f.id }}">{{ f.original_name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <label>Question:</label>
+                        <textarea name="question" id="updateChatQuestion" required></textarea>
+
+                        <label>Answer:</label>
+                        <textarea name="answer" id="updateChatAnswer" required></textarea>
+
+                        <button type="button" class="yes-btn" onclick="openSaveUpdateChatModal()">Update</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="saveCreateChatModal" class="modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveCreateChatModal()">&times;</span>
+                    <p>Are you sure you want to create this chat?</p>
+                    <button type="button" class="yes-btn" onclick="submitCreateChatForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveCreateChatModal()">No</button>
+                </div>
+            </div>
+
+            <div id="saveUpdateChatModal" class="modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeSaveUpdateChatModal()">&times;</span>
+                    <p>Are you sure you want to save this update?</p>
+                    <button type="button" class="yes-btn" onclick="submitUpdateChatForm()">Yes</button>
+                    <button type="button" class="no-btn" onclick="closeSaveUpdateChatModal()">No</button>
+                </div>
+            </div>
+
+
+            <div id="deleteChatModal" class="modal" style="display:none;">
+                <div class="file-modal-content">
+                    <span class="close" onclick="closeDeleteChatModal()">&times;</span>
+                    <p>Are you sure you want to delete this chat?</p>
+
+                    <form id="deleteChatForm" method="POST">
+                        {% csrf_token %}
+                        <button type="submit" class="yes-btn">Yes</button>
+                        <button type="button" class="no-btn" onclick="closeDeleteChatModal()">No</button>
+                    </form>
+
+                </div>
+            </div>
+
+<section id="file-chunk" class="tab-section" style="display:none;">
+    <h2>File Chunks</h2>
+
+    <label for="filterFileSelect">Filter by file:</label>
+    <select id="filterFileSelect" onchange="filterChunksByFile()">
+        <option value="">All Files</option>
+        {% for f in files %}
+        <option value="{{ f.id }}">{{ f.original_name }}</option>
+        {% endfor %}
+    </select>
+
+    <table id="chunksTable" border="1" style="width:100%; margin-top:20px; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Chunk Index</th>
+                <th>Chunk Text</th>
+                <th>Total Chunks</th>
+                <th>Index Path</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="chunksTbody">
+            {% for chunk in chunks %}
+            <tr data-file-id="{{ chunk.file.id }}">
+                <td>{{ chunk.file.original_name }}</td>
+                <td>{{ chunk.chunk_index }}</td>
+                <td>{{ chunk.chunk_text|truncatechars:100 }}</td>
+                <td>{{ chunk.total_chunks }}</td>
+                <td>{{ chunk.index_path|truncatechars:50 }}</td>
+                <td>{{ chunk.created_at }}</td>
+                <td class="actions">
+                    
+                    <button class="edit-chunk-btn" onclick="openEditChunkModal({{ chunk.id }}, '{{ chunk.chunk_text|escapejs }}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="15" fill="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path
+                                            d="M3 17.25V21h3.75l11-11.03-3.75-3.75L3 17.25zM20.71 7.04a1.004 1.004 0 0 0 0-1.42l-2.34-2.34a1.004 1.004 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" />
+                                    </svg>
+                    </button>
+                    
+                    <button class="delete-chunk-btn" onclick="openDeleteChunkModal('{% url 'admin_delete_chunk' chunk.id %}')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="15"
+                                            fill="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                d="M3 6h18v2H3V6zm2 3h14l-1.5 12.5c-.1.9-.9 1.5-1.8 1.5H8.3c-.9 0-1.7-.6-1.8-1.5L5 9zm5 2v9h2v-9H10zm4 0v9h2v-9h-2zM9 4V2h6v2h5v2H4V4h5z" />
+                                        </svg>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+
+<div id="editChunkModal" class="modal" style="display:none;">
+    <div class="modal-content3">
+        <span class="close" onclick="closeEditChunkModal()">&times;</span>
+        <h3>Edit Chunk</h3>
+        <form id="editChunkForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="chunk_id" id="editChunkId">
+            <label>Chunk Text:</label>
+            <textarea name="chunk_text" id="editChunkText" rows="5" style="width:100%;"></textarea>
+            <button type="submit" class="yes-btn">Save</button>
+        </form>
+    </div>
+</div>
+
+
+<div id="deleteChunkModal" class="modal" style="display:none;">
+    <div class="file-modal-content">
+        <span class="close" onclick="closeDeleteChunkModal()">&times;</span>
+        <p>Are you sure you want to delete this chunk?</p>
+        <form id="deleteChunkForm" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="yes-btn">Yes</button>
+            <button type="button" class="no-btn" onclick="closeDeleteChunkModal()">No</button>
+        </form>
+    </div>
+</div>
+
+
+
+<script>
+        
+function filterChunksByFile() {
+    const select = document.getElementById("filterFileSelect");
+    const selectedFileId = select.value;
+    const rows = document.querySelectorAll("#chunksTbody tr");
+    rows.forEach(row => {
+        const rowFileId = row.getAttribute("data-file-id");
+        row.style.display = (!selectedFileId || selectedFileId === rowFileId) ? "" : "none";
+    });
+}
+
+
+function openEditChunkModal(chunkId, chunkText) {
+    document.getElementById("editChunkId").value = chunkId;
+    document.getElementById("editChunkText").value = chunkText;
+    document.getElementById("editChunkModal").style.display = "block";
+}
+function closeEditChunkModal() {
+    document.getElementById("editChunkModal").style.display = "none";
+}
+
+
+function openDeleteChunkModal(url) {
+    const form = document.getElementById("deleteChunkForm");
+    form.action = url;
+    document.getElementById("deleteChunkModal").style.display = "block";
+}
+function closeDeleteChunkModal() {
+    document.getElementById("deleteChunkModal").style.display = "none";
+}
+</script>
+
+
+            <div id="modal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    <div id="modal-body"></div>
+                </div>
+            </div>
+
+            <div id="fileModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeFileModal()">&times;</span>
+                    <div id="fileModalBody"></div>
+                </div>
+            </div>
+
+            <script>
+                const createFileUrl = "{% url 'admin_create_file' %}";
+            </script>
+            <script src="{% static 'js/admin.js' %}"></script>
+</body>
+
+</html>

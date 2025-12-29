@@ -1,4 +1,4 @@
-// 📌 Get elements
+//  Get elements
 const form = document.querySelector('form');
 const username = document.querySelector('input[name="username"]');
 const email = document.querySelector('input[name="email"]');
@@ -31,7 +31,7 @@ successMsg.style.fontSize = '14px';
 form.insertAdjacentElement('beforebegin', successMsg);
 
 //  Regex Rules
-const usernameRegex = /^[a-z][a-z0-9_]{5,}$/; // lowercase start, min 6 chars
+const usernameRegex = /^[a-z][a-z0-9_]{5,}$/; 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const specialChars = /[_!@#$%^&*(),.?":{}|<>+\-=]/;
 const digitRegex = /\d/;

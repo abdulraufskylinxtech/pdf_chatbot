@@ -1,0 +1,32 @@
+<div class="interview-modal-content">
+    <h2>Start Interview</h2>
+    <span class="close" onclick="closeInterviewModal()">&times;</span>
+
+    <form action="{% url 'interview_start' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        
+        <div class="form-group">
+            <label>Upload CV:</label>
+            <input type="file" name="cv_file" accept=".pdf,.doc,.docx" required>
+        </div>
+
+        
+        <div class="form-group">
+            <label>Difficulty:</label>
+            <select name="difficulty">
+                <option value="easy">Easy</option>
+                <option value="medium" selected>Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+
+    
+        <div class="form-group">
+            <label>Number of Questions:</label>
+            <input type="number" name="question_count" value="8" min="3" max="20">
+        </div>
+
+        <button type="submit">Request Interview</button>
+    </form>
+</div>
